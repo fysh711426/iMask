@@ -62,18 +62,18 @@ namespace iMask.Crawler
                         //判斷資料需不需要更新
                         if (isFirst)
                         {
-                            var amount = await _db.Amounts.Where(it => it.IsEnable)
+                            var amount = await _db.Amounts.Where(it => it.IsEnable == 1)
                                 .FirstOrDefaultAsync();
                             if (amount?.DateTime.ToString("yyyy/MM/dd HH:mm") == record.來源資料時間)
                                 break;
                             isFirst = false;
                         }
                         //將資料都設定不啟用
-                        var amountList = await _db.Amounts.Where(it => it.IsEnable)
+                        var amountList = await _db.Amounts.Where(it => it.IsEnable == 1)
                             .ToListAsync();
                         foreach(var item in amountList)
                         {
-                            item.IsEnable = false;
+                            item.IsEnable = 0;
                         }
                         await _db.SaveChangesAsync();
 
@@ -87,7 +87,7 @@ namespace iMask.Crawler
                             {
                                 ShopId = shop.Id,
                                 DateTime = DateTime.Parse(record.來源資料時間),
-                                IsEnable = true,
+                                IsEnable = 1,
                                 AdultAmount = int.Parse(record.成人口罩總剩餘數),
                                 ChildAmount = int.Parse(record.兒童口罩剩餘數)
                             };

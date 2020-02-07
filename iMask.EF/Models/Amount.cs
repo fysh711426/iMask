@@ -9,7 +9,7 @@ namespace iMask.EF.Models
         public DateTime DateTime { get; set; }
         public int AdultAmount { get; set; }
         public int ChildAmount { get; set; }
-        public bool IsEnable { get; set; }
+        public int IsEnable { get; set; }
 
         public virtual Shop Shop { get; set; }
     }

@@ -11,4 +11,5 @@ namespace iMask.EF.Models
 
         public virtual Query Query { get; set; }
         public virtual Shop Shop { get; set; }
+    }
 }

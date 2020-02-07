@@ -53,7 +53,7 @@ namespace iMask
 
                         var shopIds = rankList.Select(it => it.shop.Id).ToArray();
                         var amountDictionary = await _db.Amounts
-                            .Where(it => shopIds.Contains(it.ShopId) && it.IsEnable)
+                            .Where(it => shopIds.Contains(it.ShopId) && it.IsEnable == 1)
                             .ToDictionaryAsync(it => it.ShopId);
 
                         var messages = new List<ISendMessage>();

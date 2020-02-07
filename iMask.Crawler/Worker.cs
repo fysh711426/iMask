@@ -64,7 +64,7 @@ namespace iMask.Crawler
                         {
                             var amount = await _db.Amounts.Where(it => it.IsEnable)
                                 .FirstOrDefaultAsync();
-                            if (amount.DateTime.ToString("yyyy/MM/dd HH:mm") == record.來源資料時間)
+                            if (amount?.DateTime.ToString("yyyy/MM/dd HH:mm") == record.來源資料時間)
                                 break;
                             isFirst = false;
                         }

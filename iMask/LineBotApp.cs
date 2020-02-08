@@ -166,7 +166,7 @@ namespace iMask
                                                     },
                                                     new TextComponent
                                                     {
-                                                        Text = $"[庫存] 成人: {item.AdultAmount?.ToString() ?? "未知"}、兒童: 50{item.ChildAmount?.ToString() ?? "未知"}",
+                                                        Text = $"[庫存] 成人: {item.AdultAmount?.ToString() ?? "未知"}、兒童: {item.ChildAmount?.ToString() ?? "未知"}",
                                                         Size = ComponentSize.Sm,
                                                         Color = "#000000",
                                                         Weight = Weight.Bold

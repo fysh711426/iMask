@@ -7,8 +7,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iMask", "iMask.csproj", "{C
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iMask.EF", "..\iMask.EF\iMask.EF.csproj", "{11A12946-503F-4D72-A721-D2AB9264B72F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iMask.Crawler", "..\iMask.Crawler\iMask.Crawler.csproj", "{E842DCD5-B3B7-4F2B-86AF-168A677FC698}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iMask.Data", "..\iMask.Data\iMask.Data.csproj", "{D41F03B0-0BF0-41C4-A1F1-C3103DC78EB8}"
 EndProject
 Global
@@ -25,10 +23,6 @@ Global
 		{11A12946-503F-4D72-A721-D2AB9264B72F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{11A12946-503F-4D72-A721-D2AB9264B72F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{11A12946-503F-4D72-A721-D2AB9264B72F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E842DCD5-B3B7-4F2B-86AF-168A677FC698}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E842DCD5-B3B7-4F2B-86AF-168A677FC698}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E842DCD5-B3B7-4F2B-86AF-168A677FC698}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E842DCD5-B3B7-4F2B-86AF-168A677FC698}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D41F03B0-0BF0-41C4-A1F1-C3103DC78EB8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D41F03B0-0BF0-41C4-A1F1-C3103DC78EB8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D41F03B0-0BF0-41C4-A1F1-C3103DC78EB8}.Release|Any CPU.ActiveCfg = Release|Any CPU

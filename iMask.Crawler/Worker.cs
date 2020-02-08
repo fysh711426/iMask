@@ -74,8 +74,8 @@ namespace iMask.Crawler
                         try
                         {
                             var amount = await _db.Amounts
-                            .Where(it => it.Code == record.醫事機構代碼)
-                            .FirstOrDefaultAsync();
+                                .Where(it => it.Code == record.醫事機構代碼)
+                                .FirstOrDefaultAsync();
                             if (amount != null)
                             {
                                 amount.DateTime = DateTime.Parse(record.來源資料時間);
@@ -88,12 +88,10 @@ namespace iMask.Crawler
                                 throw new Exception("Not found.");
                             }
                         }
-                        catch (Exception)
+                        catch (Exception ex)
                         {
-                            Console.WriteLine($"{record.醫事機構代碼} error.");
+                            Console.WriteLine($"'{record.醫事機構代碼}' error，msg: {ex.Message}");
                         }
-
-                        await _db.SaveChangesAsync();
                     }
                 }
             }

@@ -58,20 +58,23 @@ namespace iMask.Data
                 foreach (var feature in datas.features)
                 {
                     var item = feature.properties;
-                    var shop = await _db.Shops.Where(it => it.Code == item.id)
+                    var amount = await _db.Amounts.Where(it => it.Code == item.id)
                         .FirstOrDefaultAsync();
-                    if (shop == null)
+                    if (amount == null)
                     {
-                        shop = new Shop
+                        amount = new Amount
                         {
                             Code = item.id,
                             Name = item.name,
                             Address = item.address,
                             Phone = item.phone,
                             Latitude = feature.geometry.coordinates[1],
-                            Longitude = feature.geometry.coordinates[0]
+                            Longitude = feature.geometry.coordinates[0],
+                            DateTime = DateTime.Now,
+                            AdultAmount = 0,
+                            ChildAmount = 0
                         };
-                        _db.Shops.Add(shop);
+                        _db.Amounts.Add(amount);
                         await _db.SaveChangesAsync();
                     }
                 }

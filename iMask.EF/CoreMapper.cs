@@ -9,19 +9,10 @@ namespace iMask.EF
 {
     public class CoreMapper
     {
-        public void Map(EntityTypeBuilder<Shop> entity)
-        {
-            entity.ToTable("Shop");
-            entity.HasKey(p => p.Id);
-        }
-
         public void Map(EntityTypeBuilder<Amount> entity)
         {
             entity.ToTable("Amount");
             entity.HasKey(p => p.Id);
-
-            entity.HasOne(p => p.Shop).WithMany(p => p.Amounts)
-                .HasForeignKey(p => p.ShopId);
         }
 
         public void Map(EntityTypeBuilder<Query> entity)

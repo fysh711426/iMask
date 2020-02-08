@@ -62,41 +62,37 @@ namespace iMask.Crawler
                         //判斷資料需不需要更新
                         if (isFirst)
                         {
-                            var amount = await _db.Amounts.Where(it => it.IsEnable == 1)
+                            var amount = await _db.Amounts
+                                .OrderByDescending(it => it.DateTime)
                                 .FirstOrDefaultAsync();
                             if (amount?.DateTime.ToString("yyyy/MM/dd HH:mm") == record.來源資料時間)
                                 break;
                             isFirst = false;
                         }
-                        //將資料都設定不啟用
-                        var amountList = await _db.Amounts.Where(it => it.IsEnable == 1)
-                            .ToListAsync();
-                        foreach(var item in amountList)
-                        {
-                            item.IsEnable = 0;
-                        }
-                        await _db.SaveChangesAsync();
 
                         //更新資料
-                        var shopDictionary = await _db.Shops
-                            .ToDictionaryAsync(it => it.Code);
-                        var shop = null as Shop;
-                        if (shopDictionary.TryGetValue(record.醫事機構代碼, out shop))
+                        try
                         {
-                            var amount = new Amount
+                            var amount = await _db.Amounts
+                            .Where(it => it.Code == record.醫事機構代碼)
+                            .FirstOrDefaultAsync();
+                            if (amount != null)
                             {
-                                ShopId = shop.Id,
-                                DateTime = DateTime.Parse(record.來源資料時間),
-                                IsEnable = 1,
-                                AdultAmount = int.Parse(record.成人口罩總剩餘數),
-                                ChildAmount = int.Parse(record.兒童口罩剩餘數)
-                            };
-                            _db.Amounts.Add(amount);
+                                amount.DateTime = DateTime.Parse(record.來源資料時間);
+                                amount.AdultAmount = int.Parse(record.成人口罩總剩餘數);
+                                amount.ChildAmount = int.Parse(record.兒童口罩剩餘數);
+                                await _db.SaveChangesAsync();
+                            }
+                            else
+                            {
+                                throw new Exception("Not found.");
+                            }
                         }
-                        else
+                        catch (Exception)
                         {
-                            Console.WriteLine($"查無 {record.醫事機構代碼} 代碼。");
+                            Console.WriteLine($"{record.醫事機構代碼} error.");
                         }
+
                         await _db.SaveChangesAsync();
                     }
                 }

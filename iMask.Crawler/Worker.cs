@@ -48,7 +48,7 @@ namespace iMask.Crawler
             using (var httpClient = new HttpClient())
             {
                 var response = await httpClient.GetAsync(
-                    "	http://data.nhi.gov.tw/Datasets/Download.ashx?rid=A21030000I-D50001-001&l=https://data.nhi.gov.tw/resource/mask/maskdata.csv");
+                    "http://data.nhi.gov.tw/Datasets/Download.ashx?rid=A21030000I-D50001-001&l=https://data.nhi.gov.tw/resource/mask/maskdata.csv");
 
                 using (var stream = await response.Content.ReadAsStreamAsync())
                 using (var reader = new StreamReader(stream))
@@ -58,20 +58,8 @@ namespace iMask.Crawler
 
                     var tran = await _db.Database.BeginTransactionAsync();
 
-                    var isFirst = true;
                     foreach (var record in records)
                     {
-                        //判斷資料需不需要更新
-                        if (isFirst)
-                        {
-                            var amount = await _db.Amounts
-                                .OrderByDescending(it => it.DateTime)
-                                .FirstOrDefaultAsync();
-                            if (amount?.DateTime?.ToString("yyyy/MM/dd HH:mm:ss") == record.來源資料時間)
-                                break;
-                            isFirst = false;
-                        }
-
                         //更新資料
                         try
                         {
@@ -84,6 +72,8 @@ namespace iMask.Crawler
                                 amount.AdultAmount = int.Parse(record.成人口罩總剩餘數);
                                 amount.ChildAmount = int.Parse(record.兒童口罩剩餘數);
                                 await _db.SaveChangesAsync();
+
+                                Console.WriteLine($"'{record.醫事機構代碼}' update.");
                             }
                             else
                             {

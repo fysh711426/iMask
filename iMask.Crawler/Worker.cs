@@ -48,7 +48,7 @@ namespace iMask.Crawler
             using (var httpClient = new HttpClient())
             {
                 var response = await httpClient.GetAsync(
-                    "https://data.nhi.gov.tw/Datasets/DatasetResource.ashx?rId=A21030000I-D21005-004");
+                    "	http://data.nhi.gov.tw/Datasets/Download.ashx?rid=A21030000I-D50001-001&l=https://data.nhi.gov.tw/resource/mask/maskdata.csv");
 
                 using (var stream = await response.Content.ReadAsStreamAsync())
                 using (var reader = new StreamReader(stream))
@@ -65,7 +65,7 @@ namespace iMask.Crawler
                             var amount = await _db.Amounts
                                 .OrderByDescending(it => it.DateTime)
                                 .FirstOrDefaultAsync();
-                            if (amount?.DateTime?.ToString("yyyy/MM/dd HH:mm") == record.來源資料時間)
+                            if (amount?.DateTime?.ToString("yyyy/MM/dd HH:mm:ss") == record.來源資料時間)
                                 break;
                             isFirst = false;
                         }

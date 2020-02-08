@@ -55,29 +55,48 @@ namespace iMask.Data
 
                 var datas = JsonConvert.DeserializeObject<FeatureCollection>(json);
 
+                var tran = await _db.Database.BeginTransactionAsync();
+                
                 foreach (var feature in datas.features)
                 {
-                    var item = feature.properties;
-                    var amount = await _db.Amounts.Where(it => it.Code == item.id)
-                        .FirstOrDefaultAsync();
-                    if (amount == null)
+                    try
                     {
-                        amount = new Amount
+                        var item = feature.properties;
+                        var amount = await _db.Amounts.Where(it => it.Code == item.id)
+                            .FirstOrDefaultAsync();
+                        if (amount == null)
                         {
-                            Code = item.id,
-                            Name = item.name,
-                            Address = item.address,
-                            Phone = item.phone,
-                            Latitude = feature.geometry.coordinates[1],
-                            Longitude = feature.geometry.coordinates[0],
-                            DateTime = null,
-                            AdultAmount = null,
-                            ChildAmount = null
-                        };
-                        _db.Amounts.Add(amount);
+                            amount = new Amount
+                            {
+                                Code = item.id,
+                                Name = item.name,
+                                Address = item.address,
+                                Phone = item.phone,
+                                Latitude = feature.geometry.coordinates[1],
+                                Longitude = feature.geometry.coordinates[0],
+                                DateTime = null,
+                                AdultAmount = null,
+                                ChildAmount = null
+                            };
+                            _db.Amounts.Add(amount);
+                        }
+                        else
+                        {
+                            amount.Name = item.name;
+                            amount.Address = item.address;
+                            amount.Phone = item.phone;
+                            amount.Latitude = feature.geometry.coordinates[1];
+                            amount.Longitude = feature.geometry.coordinates[0];
+                        }
                         await _db.SaveChangesAsync();
                     }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"'{feature.properties.id}' error，msg: {ex.Message}");
+                    }
                 }
+
+                tran.Commit();
             }
         }
     }

@@ -56,6 +56,8 @@ namespace iMask.Crawler
                 {
                     var records = csv.GetRecords<CSV>();
 
+                    var tran = await _db.Database.BeginTransactionAsync();
+
                     var isFirst = true;
                     foreach (var record in records)
                     {
@@ -93,6 +95,8 @@ namespace iMask.Crawler
                             Console.WriteLine($"'{record.醫事機構代碼}' error，msg: {ex.Message}");
                         }
                     }
+
+                    tran.Commit();
                 }
             }
         }

@@ -39,7 +39,9 @@ namespace iMask
             {
                 case LocationEventMessage locationMessage:
                     {
-                        var amountList = await _db.Amounts.ToListAsync();
+                        var amountList = await _db.Amounts
+                            .AsNoTracking()
+                            .ToListAsync();
                         var rankList = amountList
                             .Select(it => new
                             {
@@ -58,8 +60,8 @@ namespace iMask
                                 $"{item.amount.Name}\n" +
                                 $"{item.amount.Phone}\n" +
                                 $"{item.amount.Address}\n" +
-                                $"成人口罩: {item.amount?.AdultAmount.ToString() ?? "未知"}\n" +
-                                $"兒童口罩: {item.amount?.ChildAmount.ToString() ?? "未知"}"));
+                                $"成人口罩: {item.amount.AdultAmount?.ToString() ?? "未知"}\n" +
+                                $"兒童口罩: {item.amount.ChildAmount?.ToString() ?? "未知"}"));
                         }
                         await _messagingClient.ReplyMessageAsync(ev.ReplyToken, messages);
                     }
@@ -81,8 +83,8 @@ namespace iMask
             var dLong = rad(long2 - long1);
 
             var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
-                    Math.Cos(rad(lat1)) * Math.Cos(rad(lat2))
-                    * Math.Sin(dLong / 2) * Math.Sin(dLong / 2);
+                    Math.Cos(rad(lat1)) * Math.Cos(rad(lat2)) *
+                    Math.Sin(dLong / 2) * Math.Sin(dLong / 2);
 
             var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
             var d = R * c;

@@ -67,18 +67,19 @@ namespace iMask
                                     (double)locationMessage.Latitude, (double)locationMessage.Longitude),
                                 amount = it
                             })
-                            .OrderBy(it => it.rank)
-                            .Take(10);
+                            .OrderBy(it => it.rank);
 
-                        var flexMessage = new FlexMessage("口罩庫存")
+                        FlexMessage create(IEnumerable<Amount> amounts)
                         {
-                            Contents = new BubbleContainer
+                            var flexMessage = new FlexMessage("口罩庫存")
                             {
-                                Body = new BoxComponent
+                                Contents = new BubbleContainer
                                 {
-                                    Layout = BoxLayout.Vertical,
-                                    Spacing = Spacing.Md,
-                                    Contents = new List<IFlexComponent>
+                                    Body = new BoxComponent
+                                    {
+                                        Layout = BoxLayout.Vertical,
+                                        Spacing = Spacing.Md,
+                                        Contents = new List<IFlexComponent>
                                     {
                                         new TextComponent
                                         {
@@ -89,24 +90,24 @@ namespace iMask
                                         },
                                         new SeparatorComponent
                                         {
-                        
+
                                         }
                                     }
+                                    }
                                 }
-                            }
-                        };
+                            };
 
-                        var boxs = (flexMessage.Contents as BubbleContainer)
-                            .Body.Contents;
+                            var boxs = (flexMessage.Contents as BubbleContainer)
+                                .Body.Contents;
 
-                        foreach (var item in rankList)
-                        {
-                            boxs.Add(new FixFlex.BoxComponent
+                            foreach (var item in amounts)
                             {
-                                Layout = BoxLayout.Vertical,
-                                Spacing = Spacing.Sm,
-                                OffsetStart = "-2px",
-                                Contents = new List<IFlexComponent>
+                                boxs.Add(new FixFlex.BoxComponent
+                                {
+                                    Layout = BoxLayout.Vertical,
+                                    Spacing = Spacing.Sm,
+                                    OffsetStart = "-2px",
+                                    Contents = new List<IFlexComponent>
                                 {
                                     new BoxComponent
                                     {
@@ -122,7 +123,7 @@ namespace iMask
                                                 {
                                                     new TextComponent
                                                     {
-                                                        Text = item.amount.Name,
+                                                        Text = item.Name,
                                                         Weight = Weight.Bold,
                                                         Margin = Spacing.Sm,
                                                         Flex = 0,
@@ -133,21 +134,21 @@ namespace iMask
                                                     },
                                                     new TextComponent
                                                     {
-                                                        Text = $"[電話] {item.amount.Phone}",
+                                                        Text = $"[電話] {item.Phone}",
                                                         Color = "#928D8B",
                                                         Size = ComponentSize.Sm,
                                                         Weight = Weight.Bold
                                                     },
                                                     new TextComponent
                                                     {
-                                                        Text = $"[庫存] 成人: {item.amount.AdultAmount?.ToString() ?? "未知"}、兒童: 50{item.amount.ChildAmount?.ToString() ?? "未知"}",
+                                                        Text = $"[庫存] 成人: {item.AdultAmount?.ToString() ?? "未知"}、兒童: 50{item.ChildAmount?.ToString() ?? "未知"}",
                                                         Size = ComponentSize.Sm,
                                                         Color = "#000000",
                                                         Weight = Weight.Bold
                                                     },
                                                     new TextComponent
                                                     {
-                                                        Text = $"[地址] {item.amount.Address}",
+                                                        Text = $"[地址] {item.Address}",
                                                         Size = ComponentSize.Sm,
                                                         Color = "#928D8B",
                                                         MaxLines = 2,
@@ -178,7 +179,7 @@ namespace iMask
                                                         Color = "#ffffff",
                                                         OffsetTop = "8px",
                                                         Weight = Weight.Bold,
-                                                        Action = new PostbackTemplateAction("action", $"type=location&code={item.amount.Code}")
+                                                        Action = new PostbackTemplateAction("action", $"type=location&code={item.Code}")
                                                     }
                                                 }
                                             }
@@ -189,10 +190,17 @@ namespace iMask
 
                                     }
                                 }
-                            });
+                                });
+                            }
+
+                            return flexMessage;
                         }
+
+                        var flexMessage1 = create(rankList.Take(5).Select(it => it.amount));
+                        var flexMessage2 = create(rankList.Skip(5).Take(5).Select(it => it.amount));
+
                         await _messagingClient.ReplyMessageAsync(ev.ReplyToken, 
-                            new List<ISendMessage> { flexMessage, 
+                            new List<ISendMessage> { flexMessage1, flexMessage2,
                             new TextMessage("資料來源: 健康保險資料開放服務") });
                     }
                     break;

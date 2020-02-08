@@ -39,34 +39,27 @@ namespace iMask
             {
                 case LocationEventMessage locationMessage:
                     {
-                        var shopList = await _db.Shops.ToListAsync();
-                        var rankList = shopList
+                        var amountList = await _db.Amounts.ToListAsync();
+                        var rankList = amountList
                             .Select(it => new
                             {
                                 rank = Haversine(
                                     (double)it.Latitude, (double)it.Longitude,
                                     (double)locationMessage.Latitude, (double)locationMessage.Longitude),
-                                shop = it
+                                amount = it
                             })
                             .OrderBy(it => it.rank)
                             .Take(5);
 
-                        var shopIds = rankList.Select(it => it.shop.Id).ToArray();
-                        var amountDictionary = await _db.Amounts
-                            .Where(it => shopIds.Contains(it.ShopId) && it.IsEnable == 1)
-                            .ToDictionaryAsync(it => it.ShopId);
-
                         var messages = new List<ISendMessage>();
                         foreach (var item in rankList)
                         {
-                            var amount = null as Amount;
-                            amountDictionary.TryGetValue(item.shop.Id, out amount);
                             messages.Add(new TextMessage(
-                                $"{item.shop.Name}\n" +
-                                $"{item.shop.Phone}\n" +
-                                $"{item.shop.Address}\n" +
-                                $"成人口罩: {amount?.AdultAmount.ToString() ?? "未知"}\n" +
-                                $"兒童口罩: {amount?.ChildAmount.ToString() ?? "未知"}"));
+                                $"{item.amount.Name}\n" +
+                                $"{item.amount.Phone}\n" +
+                                $"{item.amount.Address}\n" +
+                                $"成人口罩: {item.amount?.AdultAmount.ToString() ?? "未知"}\n" +
+                                $"兒童口罩: {item.amount?.ChildAmount.ToString() ?? "未知"}"));
                         }
                         await _messagingClient.ReplyMessageAsync(ev.ReplyToken, messages);
                     }

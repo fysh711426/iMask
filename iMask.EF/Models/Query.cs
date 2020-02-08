@@ -10,6 +10,6 @@ namespace iMask.EF.Models
         public decimal Latitude { get; set; }
         public decimal Longitude { get; set; }
 
-        public virtual List<QueryShop> QueryShops { get; set; }
+        public virtual List<QueryAmount> QueryAmounts { get; set; }
     }
 }

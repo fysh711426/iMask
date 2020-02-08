@@ -12,10 +12,10 @@ namespace iMask.EF.Models
         public string Address { get; set; }
         public decimal Latitude { get; set; }
         public decimal Longitude { get; set; }
-        public DateTime DateTime { get; set; }
-        public int AdultAmount { get; set; }
-        public int ChildAmount { get; set; }
+        public DateTime? DateTime { get; set; }
+        public int? AdultAmount { get; set; }
+        public int? ChildAmount { get; set; }
 
-        public virtual ICollection<QueryShop> QueryShops { get; set; }
+        public virtual ICollection<QueryAmount> QueryAmounts { get; set; }
     }
 }

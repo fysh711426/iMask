@@ -21,15 +21,15 @@ namespace iMask.EF
             entity.HasKey(p => p.Id);
         }
 
-        public void Map(EntityTypeBuilder<QueryShop> entity)
+        public void Map(EntityTypeBuilder<QueryAmount> entity)
         {
-            entity.ToTable("QueryShop");
+            entity.ToTable("QueryAmount");
             entity.HasKey(p => p.Id);
 
-            entity.HasOne(p => p.Query).WithMany(p => p.QueryShops)
+            entity.HasOne(p => p.Query).WithMany(p => p.QueryAmounts)
                 .HasForeignKey(p => p.QueryId);
-            entity.HasOne(p => p.Shop).WithMany(p => p.QueryShops)
-                .HasForeignKey(p => p.ShopId);
+            entity.HasOne(p => p.Amount).WithMany(p => p.QueryAmounts)
+                .HasForeignKey(p => p.AmountId);
         }
     }
 }

@@ -70,9 +70,9 @@ namespace iMask.Data
                             Phone = item.phone,
                             Latitude = feature.geometry.coordinates[1],
                             Longitude = feature.geometry.coordinates[0],
-                            DateTime = DateTime.Now,
-                            AdultAmount = 0,
-                            ChildAmount = 0
+                            DateTime = null,
+                            AdultAmount = null,
+                            ChildAmount = null
                         };
                         _db.Amounts.Add(amount);
                         await _db.SaveChangesAsync();

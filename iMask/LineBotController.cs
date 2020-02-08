@@ -5,6 +5,7 @@ using Line.Messaging;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -25,12 +26,14 @@ namespace iMask
         private readonly LineBotConfig _lineBotConfig;
         private readonly ILogger _logger;
         private readonly CoreDbContext _db;
+        private readonly CacheService _cacheService;
 
         public LineBotController(IWebHostEnvironment webHostEnvironment,
             IServiceProvider serviceProvider,
             LineBotConfig lineBotConfig,
             ILogger<LineBotController> logger,
-            CoreDbContext db)
+            CoreDbContext db,
+            CacheService cacheService)
         {
             _webHostEnvironment = webHostEnvironment;
             _webRootPath = webHostEnvironment.WebRootPath;
@@ -39,6 +42,7 @@ namespace iMask
             _lineBotConfig = lineBotConfig;
             _logger = logger;
             _db = db;
+            _cacheService = cacheService;
         }
 
         [HttpPost("run")]
@@ -49,7 +53,7 @@ namespace iMask
                 var events = await _httpContext.Request.GetWebhookEventsAsync(_lineBotConfig.channelSecret);
                 var lineMessagingClient = new LineMessagingClient(_lineBotConfig.accessToken);
 
-                var lineBotApp = new LineBotApp(lineMessagingClient, _db);
+                var lineBotApp = new LineBotApp(lineMessagingClient, _db, _cacheService);
                 await lineBotApp.RunAsync(events);
             }
             catch (Exception ex)

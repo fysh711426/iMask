@@ -1,8 +1,10 @@
 ﻿using iMask.EF;
 using iMask.EF.Models;
+using iMask.Models;
 using Line.Messaging;
 using Line.Messaging.Webhooks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -20,10 +22,14 @@ namespace iMask
     {
         private readonly LineMessagingClient _messagingClient;
         private readonly CoreDbContext _db;
-        public LineBotApp(LineMessagingClient lineMessagingClient, CoreDbContext db)
+        private readonly CacheService _cacheService;
+        public LineBotApp(LineMessagingClient lineMessagingClient,
+            CoreDbContext db,
+            CacheService cacheService)
         {
             _messagingClient = lineMessagingClient;
             _db = db;
+            _cacheService = cacheService;
         }
 
         protected override async Task OnFollowAsync(FollowEvent ev)
@@ -56,9 +62,8 @@ namespace iMask
             {
                 case LocationEventMessage locationMessage:
                     {
-                        var amountList = await _db.Amounts
-                            .AsNoTracking()
-                            .ToListAsync();
+                        var csvDictionary = _cacheService.GetCSV();
+                        var amountList = _cacheService.GetAmountList();
                         var rankList = amountList
                             .Select(it => new
                             {
@@ -67,11 +72,31 @@ namespace iMask
                                     (double)locationMessage.Latitude, (double)locationMessage.Longitude),
                                 amount = it
                             })
-                            .OrderBy(it => it.rank);
+                            .OrderBy(it => it.rank)
+                            .Take(10)
+                            .Select(it =>
+                            {
+                                //傳回新物件並更新庫存數量
+                                var record = null as CSV;
+                                csvDictionary.TryGetValue(it.amount.Code, out record);
+                                return new Amount
+                                {
+                                    Id = it.amount.Id,
+                                    Code = it.amount.Code,
+                                    Name = it.amount.Name,
+                                    Phone = it.amount.Phone,
+                                    Address = it.amount.Address,
+                                    Latitude = it.amount.Latitude,
+                                    Longitude = it.amount.Longitude,
+                                    DateTime = record == null ? null : new DateTime?(DateTime.Parse(record.來源資料時間)),
+                                    AdultAmount = record == null ? null : new int?(int.Parse(record.成人口罩總剩餘數)),
+                                    ChildAmount = record == null ? null : new int?(int.Parse(record.兒童口罩剩餘數))
+                                };
+                            });
 
-                        FlexMessage create(IEnumerable<Amount> amounts)
+                        FlexMessage create(int page, IEnumerable<Amount> amounts)
                         {
-                            var flexMessage = new FlexMessage("口罩庫存")
+                            var flexMessage = new FlexMessage($"口罩庫存 - {page}")
                             {
                                 Contents = new BubbleContainer
                                 {
@@ -83,7 +108,7 @@ namespace iMask
                                     {
                                         new TextComponent
                                         {
-                                            Text = "口罩庫存",
+                                            Text = $"口罩庫存 - {page}",
                                             Size = ComponentSize.Lg,
                                             Weight = Weight.Bold,
                                             Color = "#000000"
@@ -196,18 +221,20 @@ namespace iMask
                             return flexMessage;
                         }
 
-                        var flexMessage1 = create(rankList.Take(5).Select(it => it.amount));
-                        var flexMessage2 = create(rankList.Skip(5).Take(5).Select(it => it.amount));
+                        var flexMessage1 = create(1, rankList.Take(5));
+                        var flexMessage2 = create(2, rankList.Skip(5).Take(5));
 
-                        await _messagingClient.ReplyMessageAsync(ev.ReplyToken, 
+                        await _messagingClient.ReplyMessageAsync(ev.ReplyToken,
                             new List<ISendMessage> { flexMessage1, flexMessage2,
-                            new TextMessage("資料來源: 健康保險資料開放服務") });
+                            new TextMessage($"資料來源: 健康保險資料開放服務"),
+                            new TextMessage($@"更新時間: 
+                                {rankList.FirstOrDefault()?.DateTime?.ToString("yyyy/MM/dd HH:mm") ?? ""}") });
                     }
                     break;
             }
         }
 
-        //計算兩點座標間的距離
+        //計算兩點間的距離
         private double Haversine(double lat1, double long1, double lat2, double long2)
         {
             var R = 6371;

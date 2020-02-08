@@ -25,6 +25,8 @@ namespace iMask
 
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddMemoryCache();
+
             services.AddDbContext<CoreDbContext>(options =>
             {
                 options.UseMySQL(Configuration.GetConnectionString("SQLConnectionString"));

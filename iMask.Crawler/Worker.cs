@@ -58,14 +58,15 @@ namespace iMask.Crawler
 
                     var tran = await _db.Database.BeginTransactionAsync();
 
+                    var amountDictionary = await _db.Amounts.ToDictionaryAsync(it => it.Code);
+
                     foreach (var record in records)
                     {
                         //更新資料
                         try
                         {
-                            var amount = await _db.Amounts
-                                .Where(it => it.Code == record.醫事機構代碼)
-                                .FirstOrDefaultAsync();
+                            var amount = null as Amount;
+                            amountDictionary.TryGetValue(record.醫事機構代碼, out amount);
                             if (amount != null)
                             {
                                 amount.DateTime = DateTime.Parse(record.來源資料時間);

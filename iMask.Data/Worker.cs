@@ -56,14 +56,16 @@ namespace iMask.Data
                 var datas = JsonConvert.DeserializeObject<FeatureCollection>(json);
 
                 var tran = await _db.Database.BeginTransactionAsync();
-                
+
+                var amountDictionary = await _db.Amounts.ToDictionaryAsync(it => it.Code);
+
                 foreach (var feature in datas.features)
                 {
                     try
                     {
                         var item = feature.properties;
-                        var amount = await _db.Amounts.Where(it => it.Code == item.id)
-                            .FirstOrDefaultAsync();
+                        var amount = null as Amount;
+                        amountDictionary.TryGetValue(item.id, out amount);
                         if (amount == null)
                         {
                             amount = new Amount

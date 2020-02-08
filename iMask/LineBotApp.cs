@@ -224,11 +224,13 @@ namespace iMask
                         var flexMessage1 = create(1, rankList.Take(5));
                         var flexMessage2 = create(2, rankList.Skip(5).Take(5));
 
+                        var updateTime = rankList.Where(it => it.DateTime != null)
+                            .FirstOrDefault()?.DateTime?.ToString("yyyy/MM/dd HH:mm") ?? "";
+
                         await _messagingClient.ReplyMessageAsync(ev.ReplyToken,
                             new List<ISendMessage> { flexMessage1, flexMessage2,
                             new TextMessage($"資料來源: 健康保險資料開放服務"),
-                            new TextMessage($@"更新時間: 
-                                {rankList.FirstOrDefault()?.DateTime?.ToString("yyyy/MM/dd HH:mm") ?? ""}") });
+                            new TextMessage($"更新時間:\n{updateTime}") });
                     }
                     break;
             }

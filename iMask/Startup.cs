@@ -38,7 +38,7 @@ namespace iMask
                 accessToken = Configuration["LineBot:accessToken"]
             });
 
-            services.AddTransient<CacheService, CacheService>();
+            services.AddScoped<CacheService, CacheService>();
 
             services.AddHttpContextAccessor();
             services.AddRazorPages();

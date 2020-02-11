@@ -1,0 +1,76 @@
+﻿html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0px;
+}
+
+#map {
+    width: 100%;
+    height: 100%;
+}
+
+.marker-cluster-small {
+    background-image: url(https://ithelp.ithome.com.tw/upload/images/20200210/20106865an2gNAyvHQ.png);
+    background-size: contain;
+}
+
+    .marker-cluster-small div {
+        background-color: rgba(255, 255, 255, 0);
+        position: relative;
+    }
+
+    .marker-cluster-small span {
+        line-height: 26px;
+        display: inline-block;
+        position: relative;
+        top: -35px;
+        /*left: -1px;*/
+        background-color: rgba(110, 204, 57, 0.6);
+        width: 25px;
+        height: 25px;
+        border-radius: 20px;
+    }
+
+.marker-cluster-medium {
+    background-image: url(https://ithelp.ithome.com.tw/upload/images/20200210/20106865an2gNAyvHQ.png);
+    background-size: contain;
+}
+
+    .marker-cluster-medium div {
+        background-color: rgba(255, 255, 255, 0);
+        position: relative;
+    }
+
+    .marker-cluster-medium span {
+        line-height: 26px;
+        display: inline-block;
+        position: relative;
+        top: -35px;
+        /*left: -1px;*/
+        background-color: rgba(240, 194, 12, 0.6);
+        width: 25px;
+        height: 25px;
+        border-radius: 20px;
+    }
+
+.marker-cluster-large {
+    background-image: url(https://ithelp.ithome.com.tw/upload/images/20200210/20106865an2gNAyvHQ.png);
+    background-size: contain;
+}
+
+    .marker-cluster-large div {
+        background-color: rgba(255, 255, 255, 0);
+        position: relative;
+    }
+
+    .marker-cluster-large span {
+        line-height: 26px;
+        display: inline-block;
+        position: relative;
+        top: -35px;
+        /*left: -1px;*/
+        background-color: rgba(241, 128, 23, 0.6);
+        width: 25px;
+        height: 25px;
+        border-radius: 20px;
+    }

@@ -33,8 +33,9 @@ namespace iMask
                 new List<ISendMessage> {
                     new TextMessage("機器人可查詢附近口罩庫存數量"),
                     new TextMessage("資料來源: 健康保險資料開放服務"),
-                    new TextMessage("部分藥局因採發放號碼牌方式，方便民眾購買口罩，系統目前無法顯示已發送號碼牌數量"),
-                    new TextMessage("口罩數量以藥局實際存量為主，線上查詢之數量僅供參考",
+                    new ImageMessage(
+                        "https://fysh711426.github.io/iMaskMap/image/mask_info.jpg",
+                        "https://fysh711426.github.io/iMaskMap/image/mask_info_preview.jpg",
                         new QuickReply
                         {
                             Items = new List<QuickReplyButtonObject>
@@ -42,10 +43,7 @@ namespace iMask
                                 new QuickReplyButtonObject(
                                     new LocationTemplateAction("查詢"))
                             }
-                        }),
-                    //new ImageMessage(
-                    //    "",
-                    //    "https://g0vhackmd.blob.core.windows.net/g0v-hackmd-images/upload_d66720899e86826c9ae2e999dbec76fe")
+                        })
                     });
         }
 
@@ -63,12 +61,19 @@ namespace iMask
                 var longitude = decimal.Parse(query["longitude"]);
 
                 var rankList = GetRankList(
-                            latitude, longitude, skip);
+                    latitude, longitude, skip);
 
-                var flexMessage = GetFlexMessage(rankList, page);
+                var flexMessage = GetFlexMessage(rankList, page,
+                    latitude, longitude);
 
-                await ReplyMessage(rankList, flexMessage, page,
-                    latitude, longitude, ev.ReplyToken);
+                var updateTime = rankList
+                    .FirstOrDefault()?.properties.updated ?? "";
+
+                await _messagingClient.ReplyMessageAsync(ev.ReplyToken,
+                    new List<ISendMessage> {
+                        new TextMessage($"資料更新時間:\n{updateTime}"),
+                        flexMessage
+                    });
             }
         }
 
@@ -85,43 +90,25 @@ namespace iMask
                             locationMessage.Latitude, 
                             locationMessage.Longitude, skip);
 
-                        var flexMessage = GetFlexMessage(rankList, page);
+                        var flexMessage = GetFlexMessage(rankList, page,
+                            locationMessage.Latitude, locationMessage.Longitude);
 
-                        await ReplyMessage(rankList, flexMessage, page, 
-                            locationMessage.Latitude, locationMessage.Longitude, ev.ReplyToken);
+                        var updateTime = rankList
+                            .FirstOrDefault()?.properties.updated ?? "";
+
+                        await _messagingClient.ReplyMessageAsync(ev.ReplyToken,
+                            new List<ISendMessage> {
+                                new TextMessage($"資料更新時間:\n{updateTime}"),
+                                new TextMessage("部分藥局因採發放號碼牌方式，方便民眾購買口罩，系統目前無法顯示已發送號碼牌數量"),
+                                new TextMessage("口罩數量以藥局實際存量為主，線上查詢之數量僅供參考"),
+                                flexMessage
+                            });
                     }
                     break;
             }
         }
 
-        private async Task ReplyMessage(List<Feature> rankList, FlexMessage flexMessage,
-            int page, decimal latitude, decimal longitude, string replyToken)
-        {
-            var updateTime = rankList
-                    .FirstOrDefault()?.properties.updated ?? "";
-
-            await _messagingClient.ReplyMessageAsync(replyToken,
-                new List<ISendMessage> { flexMessage,
-                    new TextMessage($"更新時間:\n{updateTime}"),
-                    new TextMessage("部分藥局因採發放號碼牌方式，方便民眾購買口罩，系統目前無法顯示已發送號碼牌數量"),
-                    new TextMessage("口罩數量以藥局實際存量為主，線上查詢之數量僅供參考",
-                        new QuickReply
-                        {
-                            Items = new List<QuickReplyButtonObject>
-                            {
-                                new QuickReplyButtonObject(
-                                    new LocationTemplateAction("查詢")),
-                                new QuickReplyButtonObject(
-                                    new PostbackTemplateAction("下一頁", $"type=search&page={page+1}&latitude={latitude}&longitude={longitude}")),
-                                    //new QuickReplyButtonObject(
-                                    //    new MessageTemplateAction("B.台中", "台中"),
-                                    //    imageUrl: "https://xxx/image2.png"),
-                            }
-                        })
-                });
-        }
-
-        private FlexMessage GetFlexMessage(List<Feature> rankList, int page)
+        private FlexMessage GetFlexMessage(List<Feature> rankList, int page, decimal latitude, decimal longitude)
         {
             var flexMessage = new FlexMessage($"口罩數量 {page}")
             {
@@ -232,7 +219,7 @@ namespace iMask
                                             OffsetTop = "8px",
                                             Weight = Weight.Bold,
                                             Action = new UriTemplateAction("action",
-                                                $"https://www.google.com.tw/maps/@{item.geometry.coordinates[1]},{item.geometry.coordinates[0]},14z?hl=zh-TW")
+                                                $"https://www.google.com/maps/search/?api=1&query={item.geometry.coordinates[1]},{item.geometry.coordinates[0]}")
                                         }
                                     }
                                 }
@@ -242,6 +229,21 @@ namespace iMask
                     }
                 });
             }
+
+            flexMessage.QuickReply = new QuickReply
+            {
+                Items = new List<QuickReplyButtonObject>
+                {
+                    new QuickReplyButtonObject(
+                        new LocationTemplateAction("查詢")),
+                    new QuickReplyButtonObject(
+                        new PostbackTemplateAction("下一頁", 
+                            $"type=search&page={page+1}&latitude={latitude}&longitude={longitude}")),
+                    new QuickReplyButtonObject(
+                        new UriTemplateAction("口罩地圖", 
+                            $"https://fysh711426.github.io/iMaskMap/index.html?latitude={latitude}&longitude={longitude}")),
+                }
+            };
 
             return flexMessage;
         }

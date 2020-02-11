@@ -259,7 +259,7 @@ namespace iMask
                     data = it
                 })
                 .OrderBy(it => it.rank)
-                .Skip(skip).Take(10)
+                .Skip(skip).Take(5)
                 .Select(it => it.data)
                 .ToList();
             return rankList;

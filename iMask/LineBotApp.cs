@@ -32,6 +32,7 @@ namespace iMask
             await _messagingClient.ReplyMessageAsync(ev.ReplyToken,
                 new List<ISendMessage> {
                     new TextMessage("機器人可查詢附近口罩庫存數量"),
+                    new TextMessage("查詢方式: 傳送 LINE 定位"),
                     new TextMessage("資料來源: 健康保險資料開放服務"),
                     new ImageMessage(
                         "https://fysh711426.github.io/iMaskMap/image/mask_info.jpg",
@@ -78,11 +79,29 @@ namespace iMask
 
             if (query["type"] == "map")
             {
+                var page = int.Parse(query["page"]);
+
                 var latitude = decimal.Parse(query["latitude"]);
                 var longitude = decimal.Parse(query["longitude"]);
 
                 await _messagingClient.ReplyMessageAsync(ev.ReplyToken,
-                    $"https://fysh711426.github.io/iMaskMap/index.html?latitude={latitude}&longitude={longitude}");
+                    new List<ISendMessage> {
+                        new TextMessage($"https://fysh711426.github.io/iMaskMap/index.html?latitude={latitude}&longitude={longitude}",
+                        new QuickReply
+                        {
+                            Items = new List<QuickReplyButtonObject>
+                            {
+                                new QuickReplyButtonObject(
+                                    new LocationTemplateAction("查詢")),
+                                new QuickReplyButtonObject(
+                                    new PostbackTemplateAction("下一頁",
+                                        $"type=search&page={page}&latitude={latitude}&longitude={longitude}")),
+                                new QuickReplyButtonObject(
+                                    new PostbackTemplateAction("口罩地圖",
+                                        $"type=map&page={page}&latitude={latitude}&longitude={longitude}"))
+                            }
+                        })
+                    });
             }
         }
 
@@ -136,10 +155,7 @@ namespace iMask
                                 Weight = Weight.Bold,
                                 Color = "#000000"
                             },
-                            new SeparatorComponent
-                            {
-
-                            }
+                            new SeparatorComponent()
                         }
                     }
                 }
@@ -250,7 +266,7 @@ namespace iMask
                             $"type=search&page={page+1}&latitude={latitude}&longitude={longitude}")),
                     new QuickReplyButtonObject(
                         new PostbackTemplateAction("口罩地圖",
-                            $"type=map&latitude={latitude}&longitude={longitude}"))
+                            $"type=map&page={page+1}&latitude={latitude}&longitude={longitude}"))
                 }
             };
 

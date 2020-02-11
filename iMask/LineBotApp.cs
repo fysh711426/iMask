@@ -95,8 +95,11 @@ namespace iMask
                                 new QuickReplyButtonObject(
                                     new LocationTemplateAction("查詢")),
                                 new QuickReplyButtonObject(
-                                    new PostbackTemplateAction("下一頁",
+                                    new PostbackTemplateAction("重新整理",
                                         $"type=search&page={page}&latitude={latitude}&longitude={longitude}")),
+                                new QuickReplyButtonObject(
+                                    new PostbackTemplateAction("下一頁",
+                                        $"type=search&page={page+1}&latitude={latitude}&longitude={longitude}")),
                                 new QuickReplyButtonObject(
                                     new PostbackTemplateAction("口罩地圖",
                                         $"type=map&page={page}&latitude={latitude}&longitude={longitude}"))
@@ -157,16 +160,7 @@ namespace iMask
                                 Weight = Weight.Bold,
                                 Color = "#000000"
                             },
-                            new SeparatorComponent(),
-                            new FixFlex.TextComponent
-                            {
-                                Text = $"更新時間: {updateTime?.ToString("MM/dd HH:mm") ?? ""}",
-                                Size = ComponentSize.Sm,
-                                Weight = Weight.Bold,
-                                Color = "#928D8B",
-                                Align = Align.Start,
-                                OffsetTop = "5px"
-                            }
+                            new SeparatorComponent()
                         }
                     }
                 }
@@ -266,6 +260,16 @@ namespace iMask
                 });
             }
 
+            boxs.Add(new FixFlex.TextComponent
+            {
+                Text = $"更新時間: {updateTime?.ToString("MM/dd HH:mm") ?? ""}",
+                Size = ComponentSize.Sm,
+                Weight = Weight.Bold,
+                Color = "#928D8B",
+                Align = Align.Start,
+                OffsetTop = "5px"
+            });
+
             flexMessage.QuickReply = new QuickReply
             {
                 Items = new List<QuickReplyButtonObject>
@@ -273,11 +277,14 @@ namespace iMask
                     new QuickReplyButtonObject(
                         new LocationTemplateAction("查詢")),
                     new QuickReplyButtonObject(
+                        new PostbackTemplateAction("重新整理",
+                            $"type=search&page={page}&latitude={latitude}&longitude={longitude}")),
+                    new QuickReplyButtonObject(
                         new PostbackTemplateAction("下一頁", 
                             $"type=search&page={page+1}&latitude={latitude}&longitude={longitude}")),
                     new QuickReplyButtonObject(
                         new PostbackTemplateAction("口罩地圖",
-                            $"type=map&page={page+1}&latitude={latitude}&longitude={longitude}"))
+                            $"type=map&page={page}&latitude={latitude}&longitude={longitude}"))
                 }
             };
 

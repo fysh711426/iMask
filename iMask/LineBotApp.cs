@@ -75,6 +75,15 @@ namespace iMask
                         flexMessage
                     });
             }
+
+            if (query["type"] == "map")
+            {
+                var latitude = decimal.Parse(query["latitude"]);
+                var longitude = decimal.Parse(query["longitude"]);
+
+                await _messagingClient.ReplyMessageAsync(ev.ReplyToken,
+                    $"https://fysh711426.github.io/iMaskMap/index.html?latitude={latitude}&longitude={longitude}");
+            }
         }
 
         protected override async Task OnMessageAsync(MessageEvent ev)
@@ -240,8 +249,8 @@ namespace iMask
                         new PostbackTemplateAction("下一頁", 
                             $"type=search&page={page+1}&latitude={latitude}&longitude={longitude}")),
                     new QuickReplyButtonObject(
-                        new UriTemplateAction("口罩地圖", 
-                            $"https://fysh711426.github.io/iMaskMap/index.html?latitude={latitude}&longitude={longitude}")),
+                        new PostbackTemplateAction("口罩地圖",
+                            $"type=map&latitude={latitude}&longitude={longitude}"))
                 }
             };
 

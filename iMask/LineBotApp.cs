@@ -64,11 +64,13 @@ namespace iMask
                 var rankList = GetRankList(
                     latitude, longitude, skip);
 
-                var flexMessage = GetFlexMessage(rankList, page,
-                    latitude, longitude);
-
                 var updateTime = rankList
-                    .FirstOrDefault()?.properties.updated ?? "";
+                    .Where(it => it.properties.updated != "")
+                    .Select(it => new DateTime?(DateTime.Parse(it.properties.updated)))
+                    .FirstOrDefault();
+
+                var flexMessage = GetFlexMessage(rankList, page,
+                    latitude, longitude, updateTime);
 
                 await _messagingClient.ReplyMessageAsync(ev.ReplyToken,
                     new List<ISendMessage> {
@@ -118,15 +120,16 @@ namespace iMask
                             locationMessage.Latitude, 
                             locationMessage.Longitude, skip);
 
-                        var flexMessage = GetFlexMessage(rankList, page,
-                            locationMessage.Latitude, locationMessage.Longitude);
-
                         var updateTime = rankList
-                            .FirstOrDefault()?.properties.updated ?? "";
+                            .Where(it => it.properties.updated != "")
+                            .Select(it => new DateTime?(DateTime.Parse(it.properties.updated)))
+                            .FirstOrDefault();
+
+                        var flexMessage = GetFlexMessage(rankList, page,
+                            locationMessage.Latitude, locationMessage.Longitude, updateTime);
 
                         await _messagingClient.ReplyMessageAsync(ev.ReplyToken,
                             new List<ISendMessage> {
-                                new TextMessage($"資料更新時間:\n{updateTime}"),
                                 new TextMessage("部分藥局因採發放號碼牌方式，方便民眾購買口罩，系統目前無法顯示已發送號碼牌數量"),
                                 new TextMessage("口罩數量以藥局實際存量為主，線上查詢之數量僅供參考"),
                                 flexMessage
@@ -136,7 +139,7 @@ namespace iMask
             }
         }
 
-        private FlexMessage GetFlexMessage(List<Feature> rankList, int page, decimal latitude, decimal longitude)
+        private FlexMessage GetFlexMessage(List<Feature> rankList, int page, decimal latitude, decimal longitude, DateTime? updateTime)
         {
             var flexMessage = new FlexMessage($"口罩數量 {page}")
             {
@@ -250,7 +253,15 @@ namespace iMask
                                 }
                             }
                         },
-                        new SeparatorComponent()
+                        new SeparatorComponent(),
+                        new TextComponent
+                        {
+                            Text = $"更新時間: {updateTime?.ToString("MM/dd HH:mm") ?? ""}",
+                            Size = ComponentSize.Sm,
+                            Weight = Weight.Bold,
+                            Color = "#928D8B",
+                            Align = Align.Start
+                        }
                     }
                 });
             }

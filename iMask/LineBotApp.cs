@@ -74,7 +74,6 @@ namespace iMask
 
                 await _messagingClient.ReplyMessageAsync(ev.ReplyToken,
                     new List<ISendMessage> {
-                        new TextMessage($"資料更新時間:\n{updateTime}"),
                         flexMessage
                     });
             }
@@ -158,7 +157,16 @@ namespace iMask
                                 Weight = Weight.Bold,
                                 Color = "#000000"
                             },
-                            new SeparatorComponent()
+                            new SeparatorComponent(),
+                            new FixFlex.TextComponent
+                            {
+                                Text = $"更新時間: {updateTime?.ToString("MM/dd HH:mm") ?? ""}",
+                                Size = ComponentSize.Sm,
+                                Weight = Weight.Bold,
+                                Color = "#928D8B",
+                                Align = Align.Start,
+                                OffsetTop = "5px"
+                            }
                         }
                     }
                 }
@@ -253,15 +261,7 @@ namespace iMask
                                 }
                             }
                         },
-                        new SeparatorComponent(),
-                        new TextComponent
-                        {
-                            Text = $"更新時間: {updateTime?.ToString("MM/dd HH:mm") ?? ""}",
-                            Size = ComponentSize.Sm,
-                            Weight = Weight.Bold,
-                            Color = "#928D8B",
-                            Align = Align.Start
-                        }
+                        new SeparatorComponent()
                     }
                 });
             }

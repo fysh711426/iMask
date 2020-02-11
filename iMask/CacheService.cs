@@ -1,9 +1,8 @@
 ﻿using CsvHelper;
-using iMask.EF;
-using iMask.EF.Models;
 using iMask.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -17,57 +16,27 @@ namespace iMask
     public class CacheService
     {
         private readonly IMemoryCache _memoryCache;
-        private readonly CoreDbContext _db;
-        public CacheService(IMemoryCache memoryCache, CoreDbContext db)
+        public CacheService(IMemoryCache memoryCache)
         {
             _memoryCache = memoryCache;
-            _db = db;
         }
 
         private static object locker = new object();
-        public List<Amount> GetAmountList()
+        public FeatureCollection GetJson()
         {
-            var cacheName = "AmountList";
+            var cacheName = "Json";
 
-            var val = _memoryCache.Get<List<Amount>>(cacheName);
+            var val = _memoryCache.Get<FeatureCollection>(cacheName);
             if (val == null)
             {
                 lock (locker)
                 {
-                    val = _memoryCache.Get<List<Amount>>(cacheName);
+                    val = _memoryCache.Get<FeatureCollection>(cacheName);
                     if (val == null)
                     {
-                        var amountList = _db.Amounts.AsNoTracking().ToList();
+                        var json = loadJson().ConfigureAwait(false).GetAwaiter().GetResult();
 
-                        val = amountList;
-
-                        _memoryCache.Set(cacheName, val, new MemoryCacheEntryOptions
-                        {
-                            //24小時後過期
-                            AbsoluteExpiration = DateTimeOffset.Now.AddHours(24)
-                        });
-                    }
-                }
-            }
-            return val;
-        }
-
-        private static object csvLocker = new object();
-        public Dictionary<string, CSV> GetCSV()
-        {
-            var cacheName = "CSV";
-
-            var val = _memoryCache.Get<Dictionary<string, CSV>>(cacheName);
-            if (val == null)
-            {
-                lock (locker)
-                {
-                    val = _memoryCache.Get<Dictionary<string, CSV>>(cacheName);
-                    if (val == null)
-                    {
-                        var csv = loadCSV().ConfigureAwait(false).GetAwaiter().GetResult();
-
-                        val = csv;
+                        val = json;
 
                         _memoryCache.Set(cacheName, val, new MemoryCacheEntryOptions
                         {
@@ -79,20 +48,15 @@ namespace iMask
             }
             return val;
         }
-
-        private async Task<Dictionary<string, CSV>> loadCSV()
+        
+        private async Task<FeatureCollection> loadJson()
         {
             using (var httpClient = new HttpClient())
             {
-                var response = await httpClient.GetAsync(
-                    "http://data.nhi.gov.tw/Datasets/Download.ashx?rid=A21030000I-D50001-001&l=https://data.nhi.gov.tw/resource/mask/maskdata.csv");
+                var json = await httpClient.GetStringAsync(
+                    "https://raw.githubusercontent.com/kiang/pharmacies/master/json/points.json");
 
-                using (var stream = await response.Content.ReadAsStreamAsync())
-                using (var reader = new StreamReader(stream))
-                using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
-                {
-                    return csv.GetRecords<CSV>().ToDictionary(it => it.醫事機構代碼);
-                }
+                return JsonConvert.DeserializeObject<FeatureCollection>(json);
             }
         }
     }

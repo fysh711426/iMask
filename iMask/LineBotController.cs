@@ -1,5 +1,4 @@
-﻿using iMask.EF;
-using iMask.Extensions;
+﻿using iMask.Extensions;
 using iMask.Models;
 using Line.Messaging;
 using Microsoft.AspNetCore.Hosting;
@@ -25,14 +24,12 @@ namespace iMask
         private readonly HttpContext _httpContext;
         private readonly LineBotConfig _lineBotConfig;
         private readonly ILogger _logger;
-        private readonly CoreDbContext _db;
         private readonly CacheService _cacheService;
 
         public LineBotController(IWebHostEnvironment webHostEnvironment,
             IServiceProvider serviceProvider,
             LineBotConfig lineBotConfig,
             ILogger<LineBotController> logger,
-            CoreDbContext db,
             CacheService cacheService)
         {
             _webHostEnvironment = webHostEnvironment;
@@ -41,7 +38,6 @@ namespace iMask
             _httpContext = _httpContextAccessor.HttpContext;
             _lineBotConfig = lineBotConfig;
             _logger = logger;
-            _db = db;
             _cacheService = cacheService;
         }
 
@@ -53,7 +49,7 @@ namespace iMask
                 var events = await _httpContext.Request.GetWebhookEventsAsync(_lineBotConfig.channelSecret);
                 var lineMessagingClient = new LineMessagingClient(_lineBotConfig.accessToken);
 
-                var lineBotApp = new LineBotApp(lineMessagingClient, _db, _cacheService);
+                var lineBotApp = new LineBotApp(lineMessagingClient, _cacheService);
                 await lineBotApp.RunAsync(events);
             }
             catch (Exception ex)

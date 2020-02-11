@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using iMask.EF;
 using iMask.Models;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -26,11 +25,6 @@ namespace iMask
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMemoryCache();
-
-            services.AddDbContext<CoreDbContext>(options =>
-            {
-                options.UseMySQL(Configuration.GetConnectionString("SQLConnectionString"));
-            });
 
             services.AddSingleton<LineBotConfig, LineBotConfig>((s) => new LineBotConfig
             {

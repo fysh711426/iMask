@@ -1,6 +1,4 @@
-﻿using iMask.EF;
-using iMask.EF.Models;
-using iMask.Models;
+﻿using iMask.Models;
 using Line.Messaging;
 using Line.Messaging.Webhooks;
 using Microsoft.EntityFrameworkCore;
@@ -21,24 +19,34 @@ namespace iMask
     public class LineBotApp : WebhookApplication
     {
         private readonly LineMessagingClient _messagingClient;
-        private readonly CoreDbContext _db;
         private readonly CacheService _cacheService;
         public LineBotApp(LineMessagingClient lineMessagingClient,
-            CoreDbContext db,
             CacheService cacheService)
         {
             _messagingClient = lineMessagingClient;
-            _db = db;
             _cacheService = cacheService;
         }
 
         protected override async Task OnFollowAsync(FollowEvent ev)
         {
             await _messagingClient.ReplyMessageAsync(ev.ReplyToken,
-                "機器人可查詢附近口罩庫存數量",
-                "查詢方式: 傳送 LINE 定位",
-                "資料來源: 健康保險資料開放服務",
-                "出門前記得帶健保卡!!");
+                new List<ISendMessage> {
+                    new TextMessage("機器人可查詢附近口罩庫存數量"),
+                    new TextMessage("資料來源: 健康保險資料開放服務"),
+                    new TextMessage("部分藥局因採發放號碼牌方式，方便民眾購買口罩，系統目前無法顯示已發送號碼牌數量"),
+                    new TextMessage("口罩數量以藥局實際存量為主，線上查詢之數量僅供參考",
+                        new QuickReply
+                        {
+                            Items = new List<QuickReplyButtonObject>
+                            {
+                                new QuickReplyButtonObject(
+                                    new LocationTemplateAction("查詢"))
+                            }
+                        }),
+                    //new ImageMessage(
+                    //    "",
+                    //    "https://g0vhackmd.blob.core.windows.net/g0v-hackmd-images/upload_d66720899e86826c9ae2e999dbec76fe")
+                    });
         }
 
         protected override async Task OnPostbackAsync(PostbackEvent ev)
@@ -46,13 +54,21 @@ namespace iMask
             //將 data 資料轉成 QueryString
             var query = HttpUtility.ParseQueryString(ev.Postback.Data);
 
-            if (query["type"] == "location")
+            if (query["type"] == "search")
             {
-                var amount = await _db.Amounts.Where(it => it.Code == query["code"])
-                    .FirstOrDefaultAsync();
-                await _messagingClient.ReplyMessageAsync(ev.ReplyToken,
-                    new List<ISendMessage> {
-                    new LocationMessage(amount.Name, amount.Address, amount.Latitude, amount.Longitude) });
+                var page = int.Parse(query["page"]);
+                var skip = (page - 1) * 5;
+
+                var latitude = decimal.Parse(query["latitude"]);
+                var longitude = decimal.Parse(query["longitude"]);
+
+                var rankList = GetRankList(
+                            latitude, longitude, skip);
+
+                var flexMessage = GetFlexMessage(rankList, page);
+
+                await ReplyMessage(rankList, flexMessage, page,
+                    latitude, longitude, ev.ReplyToken);
             }
         }
 
@@ -62,178 +78,191 @@ namespace iMask
             {
                 case LocationEventMessage locationMessage:
                     {
-                        var csvDictionary = _cacheService.GetCSV();
-                        var amountList = _cacheService.GetAmountList();
-                        var rankList = amountList
-                            .Select(it => new
-                            {
-                                rank = Haversine(
-                                    (double)it.Latitude, (double)it.Longitude,
-                                    (double)locationMessage.Latitude, (double)locationMessage.Longitude),
-                                amount = it
-                            })
-                            .OrderBy(it => it.rank)
-                            .Take(10)
-                            .Select(it =>
-                            {
-                                //傳回新物件並更新庫存數量
-                                var record = null as CSV;
-                                csvDictionary.TryGetValue(it.amount.Code, out record);
-                                return new Amount
-                                {
-                                    Id = it.amount.Id,
-                                    Code = it.amount.Code,
-                                    Name = it.amount.Name,
-                                    Phone = it.amount.Phone,
-                                    Address = it.amount.Address,
-                                    Latitude = it.amount.Latitude,
-                                    Longitude = it.amount.Longitude,
-                                    DateTime = record == null ? null : new DateTime?(DateTime.Parse(record.來源資料時間)),
-                                    AdultAmount = record == null ? null : new int?(int.Parse(record.成人口罩總剩餘數)),
-                                    ChildAmount = record == null ? null : new int?(int.Parse(record.兒童口罩剩餘數))
-                                };
-                            });
+                        var page = 1;
+                        var skip = 0;
 
-                        FlexMessage create(int page, IEnumerable<Amount> amounts)
-                        {
-                            var flexMessage = new FlexMessage($"口罩庫存 - {page}")
-                            {
-                                Contents = new BubbleContainer
-                                {
-                                    Body = new BoxComponent
-                                    {
-                                        Layout = BoxLayout.Vertical,
-                                        Spacing = Spacing.Md,
-                                        Contents = new List<IFlexComponent>
-                                    {
-                                        new TextComponent
-                                        {
-                                            Text = $"口罩庫存 - {page}",
-                                            Size = ComponentSize.Lg,
-                                            Weight = Weight.Bold,
-                                            Color = "#000000"
-                                        },
-                                        new SeparatorComponent
-                                        {
+                        var rankList = GetRankList(
+                            locationMessage.Latitude, 
+                            locationMessage.Longitude, skip);
 
-                                        }
-                                    }
-                                    }
-                                }
-                            };
+                        var flexMessage = GetFlexMessage(rankList, page);
 
-                            var boxs = (flexMessage.Contents as BubbleContainer)
-                                .Body.Contents;
-
-                            foreach (var item in amounts)
-                            {
-                                boxs.Add(new FixFlex.BoxComponent
-                                {
-                                    Layout = BoxLayout.Vertical,
-                                    Spacing = Spacing.Sm,
-                                    OffsetStart = "-2px",
-                                    Contents = new List<IFlexComponent>
-                                {
-                                    new BoxComponent
-                                    {
-                                        Layout = BoxLayout.Horizontal,
-                                        Contents = new List<IFlexComponent>
-                                        {
-                                            new FixFlex.BoxComponent
-                                            {
-                                                Layout = BoxLayout.Vertical,
-                                                PaddingStart = "5px",
-                                                Spacing = Spacing.Xs,
-                                                Contents = new List<IFlexComponent>
-                                                {
-                                                    new TextComponent
-                                                    {
-                                                        Text = item.Name,
-                                                        Weight = Weight.Bold,
-                                                        Margin = Spacing.Sm,
-                                                        Flex = 0,
-                                                        Wrap = true,
-                                                        MaxLines = 2,
-                                                        Size = ComponentSize.Md,
-                                                        Color = "#000000"
-                                                    },
-                                                    new TextComponent
-                                                    {
-                                                        Text = $"[電話] {item.Phone}",
-                                                        Color = "#928D8B",
-                                                        Size = ComponentSize.Sm,
-                                                        Weight = Weight.Bold
-                                                    },
-                                                    new TextComponent
-                                                    {
-                                                        Text = $"[庫存] 成人: {item.AdultAmount?.ToString() ?? "未知"}、兒童: {item.ChildAmount?.ToString() ?? "未知"}",
-                                                        Size = ComponentSize.Sm,
-                                                        Color = "#000000",
-                                                        Weight = Weight.Bold
-                                                    },
-                                                    new TextComponent
-                                                    {
-                                                        Text = $"[地址] {item.Address}",
-                                                        Size = ComponentSize.Sm,
-                                                        Color = "#928D8B",
-                                                        MaxLines = 2,
-                                                        Wrap = true,
-                                                        Weight = Weight.Bold
-                                                    }
-                                                }
-                                            },
-                                            new FixFlex.BoxComponent
-                                            {
-                                                Layout = BoxLayout.Vertical,
-                                                BackgroundColor = "#905C44",
-                                                CornerRadius = "3px",
-                                                Margin = Spacing.Sm,
-                                                Width = "40px",
-                                                Height = "35px",
-                                                Flex = 0,
-                                                OffsetEnd = "-0px",
-                                                OffsetTop = "30px",
-                                                Contents = new List<IFlexComponent>
-                                                {
-                                                    new FixFlex.TextComponent
-                                                    {
-                                                        Text = "地圖",
-                                                        Flex = 0,
-                                                        Align = Align.Center,
-                                                        Size = ComponentSize.Sm,
-                                                        Color = "#ffffff",
-                                                        OffsetTop = "8px",
-                                                        Weight = Weight.Bold,
-                                                        Action = new PostbackTemplateAction("action", $"type=location&code={item.Code}")
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    },
-                                    new SeparatorComponent
-                                    {
-
-                                    }
-                                }
-                                });
-                            }
-
-                            return flexMessage;
-                        }
-
-                        var flexMessage1 = create(1, rankList.Take(5));
-                        var flexMessage2 = create(2, rankList.Skip(5).Take(5));
-
-                        var updateTime = rankList.Where(it => it.DateTime != null)
-                            .FirstOrDefault()?.DateTime?.ToString("yyyy/MM/dd HH:mm") ?? "";
-
-                        await _messagingClient.ReplyMessageAsync(ev.ReplyToken,
-                            new List<ISendMessage> { flexMessage1, flexMessage2,
-                            new TextMessage($"資料來源: 健康保險資料開放服務"),
-                            new TextMessage($"更新時間:\n{updateTime}") });
+                        await ReplyMessage(rankList, flexMessage, page, 
+                            locationMessage.Latitude, locationMessage.Longitude, ev.ReplyToken);
                     }
                     break;
             }
+        }
+
+        private async Task ReplyMessage(List<Feature> rankList, FlexMessage flexMessage,
+            int page, decimal latitude, decimal longitude, string replyToken)
+        {
+            var updateTime = rankList
+                    .FirstOrDefault()?.properties.updated ?? "";
+
+            await _messagingClient.ReplyMessageAsync(replyToken,
+                new List<ISendMessage> { flexMessage,
+                    new TextMessage($"更新時間:\n{updateTime}"),
+                    new TextMessage("部分藥局因採發放號碼牌方式，方便民眾購買口罩，系統目前無法顯示已發送號碼牌數量"),
+                    new TextMessage("口罩數量以藥局實際存量為主，線上查詢之數量僅供參考",
+                        new QuickReply
+                        {
+                            Items = new List<QuickReplyButtonObject>
+                            {
+                                new QuickReplyButtonObject(
+                                    new LocationTemplateAction("查詢")),
+                                new QuickReplyButtonObject(
+                                    new PostbackTemplateAction("下一頁", $"type=search&page={page+1}&latitude={latitude}&longitude={longitude}")),
+                                    //new QuickReplyButtonObject(
+                                    //    new MessageTemplateAction("B.台中", "台中"),
+                                    //    imageUrl: "https://xxx/image2.png"),
+                            }
+                        })
+                });
+        }
+
+        private FlexMessage GetFlexMessage(List<Feature> rankList, int page)
+        {
+            var flexMessage = new FlexMessage($"口罩數量 {page}")
+            {
+                Contents = new BubbleContainer
+                {
+                    Body = new BoxComponent
+                    {
+                        Layout = BoxLayout.Vertical,
+                        Spacing = Spacing.Md,
+                        Contents = new List<IFlexComponent>
+                        {
+                            new TextComponent
+                            {
+                                Text = $"口罩數量 {page}",
+                                Size = ComponentSize.Lg,
+                                Weight = Weight.Bold,
+                                Color = "#000000"
+                            },
+                            new SeparatorComponent
+                            {
+
+                            }
+                        }
+                    }
+                }
+            };
+
+            var boxs = (flexMessage.Contents as BubbleContainer)
+                .Body.Contents;
+
+            foreach (var item in rankList)
+            {
+                boxs.Add(new FixFlex.BoxComponent
+                {
+                    Layout = BoxLayout.Vertical,
+                    Spacing = Spacing.Sm,
+                    OffsetStart = "-2px",
+                    Contents = new List<IFlexComponent>
+                    {
+                        new BoxComponent
+                        {
+                            Layout = BoxLayout.Horizontal,
+                            Contents = new List<IFlexComponent>
+                            {
+                                new FixFlex.BoxComponent
+                                {
+                                    Layout = BoxLayout.Vertical,
+                                    PaddingStart = "5px",
+                                    Spacing = Spacing.Xs,
+                                    Contents = new List<IFlexComponent>
+                                    {
+                                        new TextComponent
+                                        {
+                                            Text = item.properties.name,
+                                            Weight = Weight.Bold,
+                                            Margin = Spacing.Sm,
+                                            Flex = 0,
+                                            Wrap = true,
+                                            MaxLines = 2,
+                                            Size = ComponentSize.Md,
+                                            Color = "#000000"
+                                        },
+                                        new TextComponent
+                                        {
+                                            Text = $"[電話] {item.properties.phone}",
+                                            Color = "#928D8B",
+                                            Size = ComponentSize.Sm,
+                                            Weight = Weight.Bold
+                                        },
+                                        new TextComponent
+                                        {
+                                            Text = $"[口罩] 成人: {item.properties.mask_adult}、兒童: {item.properties.mask_child}",
+                                            Size = ComponentSize.Sm,
+                                            Color = "#000000",
+                                            Weight = Weight.Bold
+                                        },
+                                        new TextComponent
+                                        {
+                                            Text = $"[地址] {item.properties.address}",
+                                            Size = ComponentSize.Sm,
+                                            Color = "#928D8B",
+                                            MaxLines = 2,
+                                            Wrap = true,
+                                            Weight = Weight.Bold
+                                        }
+                                    }
+                                },
+                                new FixFlex.BoxComponent
+                                {
+                                    Layout = BoxLayout.Vertical,
+                                    BackgroundColor = "#905C44",
+                                    CornerRadius = "3px",
+                                    Margin = Spacing.Sm,
+                                    Width = "40px",
+                                    Height = "35px",
+                                    Flex = 0,
+                                    OffsetEnd = "-0px",
+                                    OffsetTop = "30px",
+                                    Contents = new List<IFlexComponent>
+                                    {
+                                        new FixFlex.TextComponent
+                                        {
+                                            Text = "地圖",
+                                            Flex = 0,
+                                            Align = Align.Center,
+                                            Size = ComponentSize.Sm,
+                                            Color = "#ffffff",
+                                            OffsetTop = "8px",
+                                            Weight = Weight.Bold,
+                                            Action = new UriTemplateAction("action",
+                                                $"https://www.google.com.tw/maps/@{item.geometry.coordinates[1]},{item.geometry.coordinates[0]},14z?hl=zh-TW")
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        new SeparatorComponent()
+                    }
+                });
+            }
+
+            return flexMessage;
+        }
+
+        private List<Feature> GetRankList(decimal latitude, decimal longitude, int skip)
+        {
+            var json = _cacheService.GetJson();
+            var dataList = json.features;
+            var rankList = dataList
+                .Select(it => new
+                {
+                    rank = Haversine(
+                        (double)it.geometry.coordinates[1], (double)it.geometry.coordinates[0],
+                        (double)latitude, (double)longitude),
+                    data = it
+                })
+                .OrderBy(it => it.rank)
+                .Skip(skip).Take(10)
+                .Select(it => it.data)
+                .ToList();
+            return rankList;
         }
 
         //計算兩點間的距離

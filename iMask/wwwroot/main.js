@@ -75,11 +75,6 @@ xhr.onload = function () {
     var data = JSON.parse(xhr.responseText).features;
     for (var i = 0; i < data.length; i++) {
 
-        if (data[i].geometry.coordinates[1] >= 30 ||
-            data[i].geometry.coordinates[1] <= 0 ||
-            isNaN(data[i].geometry.coordinates[1]))
-            continue;
-
         var imageIcon;
         if (data[i].properties.mask_adult >= 50)
             imageIcon = image3Icon;
@@ -103,28 +98,3 @@ xhr.onload = function () {
     }
     map.addLayer(markers);
 };
-
-//storeIcon = [
-//    L.icon({ iconUrl: "images/sold-out.svg", iconSize: [48, 48], iconAnchor: [24, 48], popupAnchor: [0, -48] }),
-//    L.icon({ iconUrl: "images/emergency.svg", iconSize: [48, 48], iconAnchor: [24, 48], popupAnchor: [0, -48] }),
-//    L.icon({ iconUrl: "images/warning.svg", iconSize: [48, 48], iconAnchor: [24, 48], popupAnchor: [0, -48] }),
-//    L.icon({ iconUrl: "images/sufficient.svg", iconSize: [48, 48], iconAnchor: [24, 48], popupAnchor: [0, -48] })
-//],
-//    storeClass = ["sold-out", "emergency", "warning", "sufficient"],
-//    purchase = { day: ["日", "一", "二", "三", "四", "五", "六"], parity: ["不限", "奇數", "偶數", "奇數", "偶數", "奇數", "偶數"] },
-//    xhr = new XMLHttpRequest(),
-//    storeMarkers = L.markerClusterGroup({
-//        iconCreateFunction: function (cluster) {
-//            let list = cluster.getAllChildMarkers(),
-//                order = 0;
-//            for (let i = 0; i < list.length; i++) {
-//                order = order < 3 && list[i].options.icon.options.iconUrl === storeIcon[3].options.iconUrl ? 3 :
-//                    order < 2 && list[i].options.icon.options.iconUrl === storeIcon[2].options.iconUrl ? 2 :
-//                        order < 1 && list[i].options.icon.options.iconUrl === storeIcon[1].options.iconUrl ? 1 :
-//                            list[i].options.icon.options.iconUrl === storeIcon[0] ? 0 : order;
-//            }
-//            return L.divIcon({ html: cluster.getChildCount(), className: "icon-cluster " + storeClass[order], iconSize: [72, 30] });
-//        },
-//        removeOutsideVisibleBounds: true,
-//        animate: true
-//    }),

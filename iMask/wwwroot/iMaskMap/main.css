@@ -14,11 +14,6 @@
     background-size: contain;
 }
 
-    .icon-cluster div {
-        background-color: rgba(255, 255, 255, 0);
-        position: relative;
-    }
-
     .icon-cluster.image0-icon span {
         line-height: 26px;
         display: inline-block;

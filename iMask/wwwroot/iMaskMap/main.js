@@ -75,15 +75,13 @@ xhr.onload = function () {
     var data = JSON.parse(xhr.responseText).features;
     for (var i = 0; i < data.length; i++) {
 
-        var imageIcon;
+        var imageIcon = image0Icon;
         if (data[i].properties.mask_adult >= 50)
             imageIcon = image3Icon;
         else if (data[i].properties.mask_adult > 20)
             imageIcon = image2Icon;
         else if (data[i].properties.mask_adult > 0)
             imageIcon = image1Icon;
-        else
-            imageIcon = image0Icon;
 
         var mark = L.marker([
             data[i].geometry.coordinates[1],

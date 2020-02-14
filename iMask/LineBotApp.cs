@@ -102,7 +102,43 @@ namespace iMask
                                         $"type=search&page={page+1}&latitude={latitude}&longitude={longitude}")),
                                 new QuickReplyButtonObject(
                                     new PostbackTemplateAction("口罩地圖",
-                                        $"type=map&page={page}&latitude={latitude}&longitude={longitude}"))
+                                        $"type=map&page={page}&latitude={latitude}&longitude={longitude}")),
+                                new QuickReplyButtonObject(
+                                    new PostbackTemplateAction("疫情地圖",
+                                        $"type=COVID&page={page}&latitude={latitude}&longitude={longitude}"))
+                            }
+                        })
+                    });
+            }
+
+            if (query["type"] == "COVID")
+            {
+                var page = int.Parse(query["page"]);
+
+                var latitude = decimal.Parse(query["latitude"]);
+                var longitude = decimal.Parse(query["longitude"]);
+
+                await _messagingClient.ReplyMessageAsync(ev.ReplyToken,
+                    new List<ISendMessage> {
+                        new TextMessage($"https://fysh711426.github.io/iCOVID/index.html",
+                        new QuickReply
+                        {
+                            Items = new List<QuickReplyButtonObject>
+                            {
+                                new QuickReplyButtonObject(
+                                    new LocationTemplateAction("查詢")),
+                                new QuickReplyButtonObject(
+                                    new PostbackTemplateAction("重新整理",
+                                        $"type=search&page={page}&latitude={latitude}&longitude={longitude}")),
+                                new QuickReplyButtonObject(
+                                    new PostbackTemplateAction("下一頁",
+                                        $"type=search&page={page+1}&latitude={latitude}&longitude={longitude}")),
+                                new QuickReplyButtonObject(
+                                    new PostbackTemplateAction("口罩地圖",
+                                        $"type=map&page={page}&latitude={latitude}&longitude={longitude}")),
+                                new QuickReplyButtonObject(
+                                    new PostbackTemplateAction("疫情地圖",
+                                        $"type=COVID&page={page}&latitude={latitude}&longitude={longitude}"))
                             }
                         })
                     });
@@ -284,7 +320,10 @@ namespace iMask
                             $"type=search&page={page+1}&latitude={latitude}&longitude={longitude}")),
                     new QuickReplyButtonObject(
                         new PostbackTemplateAction("口罩地圖",
-                            $"type=map&page={page}&latitude={latitude}&longitude={longitude}"))
+                            $"type=map&page={page}&latitude={latitude}&longitude={longitude}")),
+                    new QuickReplyButtonObject(
+                        new PostbackTemplateAction("疫情地圖",
+                            $"type=COVID&page={page}&latitude={latitude}&longitude={longitude}"))
                 }
             };
 

@@ -8,7 +8,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 }).addTo(map);
 
 var xhr = new XMLHttpRequest();
-xhr.open('get', 'https://coronavirus-tracker-api.herokuapp.com/all');
+xhr.open('get', 'https://services1.arcgis.com/0MSEUqKaxRlEPj5g/arcgis/rest/services/ncov_cases/FeatureServer/1/query?f=json&where=1=1&returnGeometry=false&spatialRel=esriSpatialRelIntersects&outFields=*&orderByFields=Confirmed%20desc,Country_Region%20asc,Province_State%20asc&resultOffset=0&cacheHint=true');
 xhr.send();
 xhr.onload = function () {
 
@@ -17,17 +17,38 @@ xhr.onload = function () {
     var recovered = document.getElementById("popup-recovered");
     var deaths = document.getElementById("popup-deaths");
 
-    var data = JSON.parse(xhr.responseText);
+    var data = JSON.parse(xhr.responseText).features;
+
+    //將地名轉成中文
+    for (let i = 0; i < data.length; i++) {
+        let item = data[i].attributes;
+        item.Country_Region = item.Country_Region || "";
+        item.Country_Region = typeof translation(item.Country_Region) === "undefined" ?
+            item.Country_Region : translation(item.Country_Region);
+        item.Province_State = item.Province_State || "";
+        item.Province_State = typeof translation(item.Province_State) === "undefined" ?
+            item.Province_State : translation(item.Province_State);
+    }
+
+    //計算全球人數
+    var totalConfirmed = 0;
+    var totalRecovered = 0;
+    var totalDeaths = 0;
+    for (let i = 0; i < data.length; i++) {
+        let item = data[i].attributes;
+        totalConfirmed += item.Confirmed;
+        totalRecovered += item.Recovered;
+        totalDeaths += item.Deaths;
+    }
 
     var focus = null;
 
     //處理 mapClick
-    var latest = data.latest;
     var mapClick = function () {
         title.innerHTML = '全球';
-        confirmed.innerHTML = '[確診] ' + latest.confirmed + ' 人';
-        recovered.innerHTML = '[康復] ' + latest.recovered + ' 人';
-        deaths.innerHTML = '[死亡] ' + latest.deaths + ' 人';
+        confirmed.innerHTML = '[確診] ' + totalConfirmed + ' 人';
+        recovered.innerHTML = '[康復] ' + totalRecovered + ' 人';
+        deaths.innerHTML = '[死亡] ' + totalDeaths + ' 人';
 
         if (focus !== null) {
             focus.setStyle({
@@ -40,25 +61,22 @@ xhr.onload = function () {
     map.on('click', mapClick);
     mapClick();
 
-    //處理 JSON 資料
-    var locations = getLocations(data);
+    //畫圓圈
+    for (let i = 0; i < data.length; i++) {
+        let item = data[i].attributes;
 
-    for (var index in locations) {
-
-        let item = locations[index];
-
-        //處理圓形大小
-        var radius = getRadius(parseInt(item.confirmed.latest));
+        //計算圓圈大小
+        var radius = getRadius(item.Confirmed);
 
         var click = function (e) {
             var circle = e.target;
-            title.innerHTML = circle.data.country +
-                (circle.data.province === '' ||
-                    circle.data.province === circle.data.country ?
-                    '' : ' - ' + circle.data.province);
-            confirmed.innerHTML = '[確診] ' + circle.data.confirmed.latest + ' 人';
-            recovered.innerHTML = '[康復] ' + circle.data.recovered.latest + ' 人';
-            deaths.innerHTML = '[死亡] ' + circle.data.deaths.latest + ' 人';
+            title.innerHTML = circle.data.Country_Region +
+                (circle.data.Province_State === '' ||
+                circle.data.Province_State === circle.data.Country_Region ?
+                '' : ' - ' + circle.data.Province_State);
+            confirmed.innerHTML = '[確診] ' + circle.data.Confirmed + ' 人';
+            recovered.innerHTML = '[康復] ' + circle.data.Recovered + ' 人';
+            deaths.innerHTML = '[死亡] ' + circle.data.Deaths + ' 人';
 
             //focus
             if (focus !== null) {
@@ -73,7 +91,7 @@ xhr.onload = function () {
             });
         };
 
-        var circle = L.circleMarker([item.lat, item.long], {
+        var circle = L.circleMarker([item.Lat, item.Long_], {
             radius: radius,
             stroke: false,
             fillColor: '#e91e3a',
@@ -141,7 +159,7 @@ function translation(text) {
         "Boston, MA": "馬薩諸塞州波士頓",
         "San Benito, CA": "加利福尼亞聖貝尼托",
         "Madison, WI": "威斯康星州麥迪遜",
-        "Diamond Princess cruise ship": "鑽石公主遊輪",
+        "\"Diamond Princess\" cruise ship": "鑽石公主遊輪",
         "San Diego County, CA": "加利福尼亞聖地亞哥縣",
         "San Antonio, TX": "德克薩斯州聖安東尼奧市",
         "Mainland China": "中國大陸",
@@ -174,69 +192,33 @@ function translation(text) {
     return dic[text];
 }
 
-function getLocations(data) {
-    var locations = {};
-
-    //處理 confirmed
-    for (let i = 0; i < data.confirmed.locations.length; i++) {
-        let item = data.confirmed.locations[i];
-        locations['[' + item.country + '][' + item.province + ']'] = {
-            country: typeof translation(item.country) === "undefined" ?
-                item.country : translation(item.country),
-            province: typeof translation(item.province) === "undefined" ?
-                item.province : translation(item.province),
-            lat: item.coordinates.lat,
-            long: item.coordinates.long,
-            confirmed: {
-                latest: item.latest
-            },
-            recovered: {
-                latest: '未知'
-            },
-            deaths: {
-                latest: '未知'
-            }
-        };
-    }
-
-    //處理 recovered
-    for (let i = 0; i < data.recovered.locations.length; i++) {
-        let item = data.recovered.locations[i];
-        let location = locations['[' + item.country + '][' + item.province + ']'];
-        location.recovered.latest = item.latest;
-    }
-
-    //處理 deaths
-    for (let i = 0; i < data.deaths.locations.length; i++) {
-        let item = data.deaths.locations[i];
-        let location = locations['[' + item.country + '][' + item.province + ']'];
-        location.deaths.latest = item.latest;
-    }
-
-    return locations;
-}
-
-function getRadius(latest) {
+function getRadius(count) {
     var radius = 0;
-    if (latest >= 1000000) {
+    if (count >= 1000000) {
         radius = 110;
+        radius = radius + 4.0 * (count / 1000000 % 10);
     }
-    else if (latest >= 100000) {
+    else if (count >= 100000) {
         radius = 80;
+        radius = radius + 3.5 * (count / 100000);
     }
-    else if (latest >= 10000) {
+    else if (count >= 10000) {
         radius = 55;
+        radius = radius + 2.5 * (count / 10000);
     }
-    else if (latest >= 1000) {
+    else if (count >= 1000) {
         radius = 35;
+        radius = radius + 2.0 * (count / 1000);
     }
-    else if (latest >= 100) {
+    else if (count >= 100) {
         radius = 20;
+        radius = radius + 1.5 * (count / 100);
     }
-    else if (latest >= 10) {
+    else if (count >= 10) {
         radius = 10;
+        radius = radius + 1.0 * (count / 10);
     }
-    else if (latest >= 0) {
+    else if (count >= 0) {
         radius = 5;
     }
     return radius;

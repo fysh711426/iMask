@@ -7,8 +7,12 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 }).addTo(map);
 
+//L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+//    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+//}).addTo(map);
+
 var xhr = new XMLHttpRequest();
-xhr.open('get', 'https://services1.arcgis.com/0MSEUqKaxRlEPj5g/arcgis/rest/services/ncov_cases/FeatureServer/1/query?f=json&where=1=1&returnGeometry=false&spatialRel=esriSpatialRelIntersects&outFields=*&orderByFields=Confirmed%20desc,Country_Region%20asc,Province_State%20asc&resultOffset=0&cacheHint=true');
+xhr.open('get','https://services1.arcgis.com/0MSEUqKaxRlEPj5g/arcgis/rest/services/ncov_cases/FeatureServer/1/query?f=json&where=1%3D1&returnGeometry=false&spatialRel=esriSpatialRelIntersects&outFields=*&orderByFields=Confirmed%20desc%2CCountry_Region%20asc%2CProvince_State%20asc&resultOffset=0&resultRecordCount=250&cacheHint=true');
 xhr.send();
 xhr.onload = function () {
 
@@ -105,6 +109,37 @@ xhr.onload = function () {
         circle.addTo(map)
             .on('click', click);
     }
+
+    //處理列表
+    var list = _(data).map(function (item) {
+        return item.attributes;
+    }).groupBy(function (item) {
+        return item.Country_Region;
+    }).map(function (list, index) {
+        return {
+            Country_Region: index,
+            Confirmed: _.reduce(list, function (sum, n) {
+                return sum + n.Confirmed;
+            }, 0),
+            Recovered: _.reduce(list, function (sum, n) {
+                return sum + n.Recovered;
+            }, 0),
+            Deaths: _.reduce(list, function (sum, n) {
+                return sum + n.Deaths;
+            }, 0)
+        };
+    }).orderBy(['Confirmed', 'Country_Region'], ['desc', 'asc']).value();
+
+    //產生列表 HTML
+    var result = "";
+    for (let i = 0; i < list.length; i++) {
+        let item = list[i];
+        result += '<p>[' + item.Country_Region + '] ' + item.Confirmed + ' 人</p >';
+    }
+    document.getElementById("list").innerHTML = result;
+
+    //顯示切換按鈕
+    document.getElementById("btn").style.display = "block";
 };
 
 function translation(text) {
@@ -187,7 +222,8 @@ function translation(text) {
         "Sweden": "瑞典",
         "Spain": "西班牙",
         "Belgium": "比利時",
-        "Others": "其他"
+        "Others": "其他",
+        "Egypt": "埃及"
     };
     return dic[text];
 }
@@ -195,31 +231,44 @@ function translation(text) {
 function getRadius(count) {
     var radius = 0;
     if (count >= 1000000) {
-        radius = 110;
-        radius = radius + 4.0 * (count / 1000000 % 10);
+        radius = 85;
+        radius = radius + 3.0 * (parseInt(count / 1000000) % 10);
     }
     else if (count >= 100000) {
-        radius = 80;
-        radius = radius + 3.5 * (count / 100000);
+        radius = 60;
+        radius = radius + 2.5 * (count / 100000);
     }
     else if (count >= 10000) {
-        radius = 55;
-        radius = radius + 2.5 * (count / 10000);
+        radius = 40;
+        radius = radius + 2.0 * (count / 10000);
     }
     else if (count >= 1000) {
-        radius = 35;
-        radius = radius + 2.0 * (count / 1000);
+        radius = 25;
+        radius = radius + 1.5 * (count / 1000);
     }
     else if (count >= 100) {
-        radius = 20;
-        radius = radius + 1.5 * (count / 100);
-    }
-    else if (count >= 10) {
-        radius = 10;
-        radius = radius + 1.0 * (count / 10);
+        radius = 15;
+        radius = radius + 1.0 * (count / 100);
     }
     else if (count >= 0) {
         radius = 5;
+        radius = radius + 1.0 * (count / 10);
     }
     return radius;
+}
+
+var state = 1;
+function toggle() {
+    var item = document.getElementById("item-block");
+    var list = document.getElementById("list-block");
+    if (state === 1) {
+        item.style.display = "none";
+        list.style.display = "block";
+        state = 2;
+    }
+    else {
+        item.style.display = "block";
+        list.style.display = "none";
+        state = 1;
+    }
 }

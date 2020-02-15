@@ -13,15 +13,26 @@
     <div id="map"></div>
 
     <div class="popup">
-        <p id="popup-title"></p>
-        <p id="popup-confirmed">資料讀取中...</p>
-        <p id="popup-recovered"></p>
-        <p id="popup-deaths"></p>
+        <div class="popup-wrap">
+            <a href="javascript:void(0)" onclick="toggle()" id="btn" style="display: none">切換</a>
+            <div id="item-block">
+                <p id="popup-title"></p>
+                <p id="popup-confirmed">資料讀取中...</p>
+                <p id="popup-recovered"></p>
+                <p id="popup-deaths"></p>
+            </div>
+            <div id="list-block" style="display: none">
+                <p id="list-title">確診清單</p>
+                <div id="list">
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.15/lodash.min.js"></script>
     <script src="main.js"></script>
 </body>
 </html>

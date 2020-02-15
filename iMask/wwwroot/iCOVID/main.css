@@ -50,3 +50,43 @@
     font-size: larger;
     font-weight: bold;
 }
+
+.popup-wrap {
+    position: relative;
+}
+
+.popup #btn {
+    position: absolute;
+    right: 5px;
+    text-decoration: none;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+    .popup #btn:link,
+    .popup #btn:visited,
+    .popup #btn:active {
+        color: #2A93EE;
+    }
+
+    .popup #btn:hover {
+        color: #0072c4;
+    }
+
+#list-title {
+    padding-left: 10px;
+    border-left: 5px solid rgb(16, 120, 121);
+    color: #000000;
+    font-size: large;
+    font-weight: bold;
+    margin: 18px 0;
+}
+
+#list {
+    color: #000000;
+    font-size: larger;
+    font-weight: bold;
+    overflow-y: scroll;
+    max-height: 230px;
+    margin-bottom: 15px;
+}

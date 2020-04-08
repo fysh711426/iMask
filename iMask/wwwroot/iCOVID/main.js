@@ -12,7 +12,7 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
 }).addTo(map);
 
 var xhr = new XMLHttpRequest();
-xhr.open('get','https://services1.arcgis.com/0MSEUqKaxRlEPj5g/arcgis/rest/services/ncov_cases/FeatureServer/1/query?f=json&where=1%3D1&returnGeometry=false&spatialRel=esriSpatialRelIntersects&outFields=*&orderByFields=Confirmed%20desc%2CCountry_Region%20asc%2CProvince_State%20asc&resultOffset=0&resultRecordCount=250&cacheHint=true');
+xhr.open('get', 'https://services1.arcgis.com/0MSEUqKaxRlEPj5g/arcgis/rest/services/ncov_cases/FeatureServer/1/query?f=json&where=1%3D1&returnGeometry=false&spatialRel=esriSpatialRelIntersects&outFields=*&orderByFields=Confirmed%20desc%2CCountry_Region%20asc%2CProvince_State%20asc&resultOffset=0&resultRecordCount=250&cacheHint=true');
 xhr.send();
 xhr.onload = function () {
 
@@ -33,9 +33,9 @@ xhr.onload = function () {
         item.Province_State = item.Province_State || "";
         item.Province_State = typeof translation(item.Province_State) === "undefined" ?
             item.Province_State : translation(item.Province_State);
-        //check += item.Country_Region + "\n" + item.Province_State + "\n";
+        check += item.Country_Region + "\n" + item.Province_State + "\n";
     }
-    //console.log(check);
+    console.log(check);
 
     //計算全球人數
     var totalConfirmed = 0;
@@ -72,6 +72,9 @@ xhr.onload = function () {
     for (let i = 0; i < data.length; i++) {
         let item = data[i].attributes;
 
+        if (item.Lat === null || item.Long_ === null)
+            continue;
+
         //計算圓圈大小
         var radius = getRadius(item.Confirmed);
 
@@ -79,8 +82,8 @@ xhr.onload = function () {
             var circle = e.target;
             title.innerHTML = circle.data.Country_Region +
                 (circle.data.Province_State === '' ||
-                circle.data.Province_State === circle.data.Country_Region ?
-                '' : ' - ' + circle.data.Province_State);
+                    circle.data.Province_State === circle.data.Country_Region ?
+                    '' : ' - ' + circle.data.Province_State);
             confirmed.innerHTML = '[確診] ' + circle.data.Confirmed + ' 人';
             recovered.innerHTML = '[康復] ' + circle.data.Recovered + ' 人';
             deaths.innerHTML = '[死亡] ' + circle.data.Deaths + ' 人';
@@ -98,6 +101,8 @@ xhr.onload = function () {
             });
         };
 
+        //console.log(item.Lat + "," + item.Long_);
+        //console.log(item);
         var circle = L.circleMarker([item.Lat, item.Long_], {
             radius: radius,
             stroke: false,
@@ -144,6 +149,51 @@ xhr.onload = function () {
     //顯示切換按鈕
     document.getElementById("btn").style.display = "block";
 };
+
+function getRadius(count) {
+    var radius = 0;
+    if (count >= 1000000) {
+        radius = 85;
+        radius = radius + 3.0 * (parseInt(count / 1000000) % 10);
+    }
+    else if (count >= 100000) {
+        radius = 60;
+        radius = radius + 2.5 * (count / 100000);
+    }
+    else if (count >= 10000) {
+        radius = 40;
+        radius = radius + 2.0 * (count / 10000);
+    }
+    else if (count >= 1000) {
+        radius = 25;
+        radius = radius + 1.5 * (count / 1000);
+    }
+    else if (count >= 100) {
+        radius = 15;
+        radius = radius + 1.0 * (count / 100);
+    }
+    else if (count >= 0) {
+        radius = 5;
+        radius = radius + 1.0 * (count / 10);
+    }
+    return radius;
+}
+
+var state = 1;
+function toggle() {
+    var item = document.getElementById("item-block");
+    var list = document.getElementById("list-block");
+    if (state === 1) {
+        item.style.display = "none";
+        list.style.display = "block";
+        state = 2;
+    }
+    else {
+        item.style.display = "block";
+        list.style.display = "none";
+        state = 1;
+    }
+}
 
 function translation(text) {
     var dic = {
@@ -204,7 +254,7 @@ function translation(text) {
         "Thailand": "泰國",
         "Japan": "日本",
         "South Korea": "南韓",
-        "US": "美国",
+        "US": "美國",
         "Singapore": "新加坡",
         "Vietnam": "越南",
         "France": "法國",
@@ -414,52 +464,35 @@ function translation(text) {
         "Saint Barthelemy": "聖巴托洛繆島",
         "Gibraltar": "直布羅陀",
         "North Dakota": "北達科他州",
-        "Virgin Islands, U.S.": "美國維爾京群島"
+        "Virgin Islands, U.S.": "美國維爾京群島",
+        "Uzbekistan": "烏茲別克斯坦",
+        "West Virginia": "西弗吉尼亞",
+        "Nova Scotia": "新斯科舍省",
+        "Niger": "尼日爾",
+        "Kyrgyzstan": "吉爾吉斯斯坦",
+        "Mauritius": "毛里求斯",
+        "West Bank and Gaza": "約旦河西岸和加沙",
+        "Montenegro": "黑山共和國",
+        "Newfoundland and Labrador": "紐芬蘭與拉布拉多",
+        "Alaska": "阿拉斯加州",
+        "Kosovo": "科索沃",
+        "Mayotte": "馬約特島",
+        "Isle of Man": "馬恩島",
+        "Guam": "關島",
+        "El Salvador": "薩爾瓦多",
+        "Djibouti": "吉布地",
+        "Madagascar": "馬達加斯加",
+        "Barbados": "巴巴多斯",
+        "Mali": "馬里",
+        "Uganda": "烏干達",
+        "Congo (Brazzaville)": "剛果(布拉柴維爾)",
+        "Virgin Islands": "維爾京群島",
+        "Sint Maarten": "聖馬丁",
+        "Bermuda": "百慕大",
+        "Zambia": "贊比亞",
+        "Bahamas": "巴哈馬",
+        "Guinea-Bissau": "幾內亞比紹",
+        "Eritrea": "厄立特里亞"
     };
     return dic[text];
-}
-
-function getRadius(count) {
-    var radius = 0;
-    if (count >= 1000000) {
-        radius = 85;
-        radius = radius + 3.0 * (parseInt(count / 1000000) % 10);
-    }
-    else if (count >= 100000) {
-        radius = 60;
-        radius = radius + 2.5 * (count / 100000);
-    }
-    else if (count >= 10000) {
-        radius = 40;
-        radius = radius + 2.0 * (count / 10000);
-    }
-    else if (count >= 1000) {
-        radius = 25;
-        radius = radius + 1.5 * (count / 1000);
-    }
-    else if (count >= 100) {
-        radius = 15;
-        radius = radius + 1.0 * (count / 100);
-    }
-    else if (count >= 0) {
-        radius = 5;
-        radius = radius + 1.0 * (count / 10);
-    }
-    return radius;
-}
-
-var state = 1;
-function toggle() {
-    var item = document.getElementById("item-block");
-    var list = document.getElementById("list-block");
-    if (state === 1) {
-        item.style.display = "none";
-        list.style.display = "block";
-        state = 2;
-    }
-    else {
-        item.style.display = "block";
-        list.style.display = "none";
-        state = 1;
-    }
 }

@@ -33,9 +33,9 @@ xhr.onload = function () {
         item.Province_State = item.Province_State || "";
         item.Province_State = typeof translation(item.Province_State) === "undefined" ?
             item.Province_State : translation(item.Province_State);
-        check += item.Country_Region + "\n" + item.Province_State + "\n";
+        //check += item.Country_Region + "\n" + item.Province_State + "\n";
     }
-    console.log(check);
+    //console.log(check);
 
     //計算全球人數
     var totalConfirmed = 0;

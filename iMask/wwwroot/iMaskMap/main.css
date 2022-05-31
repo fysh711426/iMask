@@ -10,9 +10,14 @@
 }
 
 .icon-cluster {
-    background-image: url(https://raw.githubusercontent.com/fysh711426/fysh711426.github.io/master/iCOVID/image/iMask_back.png);
+    background-image: url(https://raw.githubusercontent.com/fysh711426/fysh711426.github.io/master/iMaskMap/image/iMask_back.png);
     background-size: contain;
 }
+
+    .icon-cluster div {
+        background-color: rgba(255, 255, 255, 0);
+        position: relative;
+    }
 
     .icon-cluster.image0-icon span {
         line-height: 26px;

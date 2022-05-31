@@ -152,29 +152,33 @@ xhr.onload = function () {
 
 function getRadius(count) {
     var radius = 0;
-    if (count >= 1000000) {
-        radius = 85;
-        radius = radius + 3.0 * (parseInt(count / 1000000) % 10);
+    if (count >= 10000000) {
+        radius = 65;
+        radius = radius + 2.5 * (parseInt(count / 1000000) % 10);
+    }
+    else if (count >= 1000000) {
+        radius = 45;
+        radius = radius + 2.0 * (parseInt(count / 1000000) % 10);
     }
     else if (count >= 100000) {
-        radius = 60;
-        radius = radius + 2.5 * (count / 100000);
+        radius = 30;
+        radius = radius + 1.5 * (count / 100000);
     }
     else if (count >= 10000) {
-        radius = 40;
-        radius = radius + 2.0 * (count / 10000);
+        radius = 20;
+        radius = radius + 1.0 * (count / 10000);
     }
     else if (count >= 1000) {
-        radius = 25;
-        radius = radius + 1.5 * (count / 1000);
+        radius = 15;
+        radius = radius + 0.5 * (count / 1000);
     }
     else if (count >= 100) {
-        radius = 15;
-        radius = radius + 1.0 * (count / 100);
+        radius = 10;
+        radius = radius + 0.5 * (count / 100);
     }
     else if (count >= 0) {
         radius = 5;
-        radius = radius + 1.0 * (count / 10);
+        radius = radius + 0.5 * (count / 10);
     }
     return radius;
 }
